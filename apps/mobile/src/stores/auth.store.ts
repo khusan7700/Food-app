@@ -25,11 +25,12 @@ interface AuthStore {
   loginWithKakao: (kakaoAccessToken: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isLoading: true,
 
@@ -70,6 +71,11 @@ export const useAuthStore = create<AuthStore>()(
         } finally {
           set({ isLoading: false });
         }
+      },
+
+      updateUser: (patch) => {
+        const { user } = get();
+        if (user) set({ user: { ...user, ...patch } });
       },
     }),
     {

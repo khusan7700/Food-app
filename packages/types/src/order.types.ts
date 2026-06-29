@@ -30,7 +30,6 @@ export interface Order {
   driverId: string | null;
   status: OrderStatus;
   totalPrice: number;
-  stripePaymentIntentId: string | null;
   cancelReason: string | null;
   deliveryAddress: string;
   createdAt: Date;

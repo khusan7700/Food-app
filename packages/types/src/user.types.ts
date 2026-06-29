@@ -11,6 +11,7 @@ export interface User {
   email: string | null;
   name: string;
   role: UserRole;
+  avatarUrl: string | null;
   pushToken: string | null;
   createdAt: Date;
   updatedAt: Date;

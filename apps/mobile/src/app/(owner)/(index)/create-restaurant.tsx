@@ -22,6 +22,7 @@ export default function CreateRestaurantScreen() {
   const [address, setAddress] = useState("");
   const [cuisineType, setCuisineType] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const { mutate: createRestaurant, isPending } = useMutation({
@@ -50,14 +51,19 @@ export default function CreateRestaurantScreen() {
   async function handlePickImage() {
     setIsUploading(true);
     try {
-      const url = await pickAndUploadImage((localUri) => setImageUrl(localUri));
+      const url = await pickAndUploadImage("restaurant", (localUri) =>
+        setImagePreview(localUri),
+      );
       if (url) setImageUrl(url);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
     } finally {
+      setImagePreview(null);
       setIsUploading(false);
     }
   }
+
+  const displayedImage = imagePreview ?? imageUrl;
 
   function handleSubmit() {
     if (!name || !address || !cuisineType) {
@@ -77,8 +83,8 @@ export default function CreateRestaurantScreen() {
         }}
         disabled={isUploading}
       >
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} />
+        {displayedImage ? (
+          <Image source={{ uri: displayedImage }} style={styles.image} />
         ) : (
           <Text style={styles.imagePickerText}>
             {isUploading ? "Uploading..." : "Tap to upload restaurant image"}

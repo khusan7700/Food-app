@@ -8,6 +8,7 @@ import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
+import { UserRole } from '@food-delivery/types';
 import { useColorScheme } from '@/components/useColorScheme';
 import { queryClient } from '@/lib/query-client';
 import { useAuthStore } from '@/stores/auth.store';
@@ -16,11 +17,6 @@ export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -72,8 +68,15 @@ function RootLayoutNav() {
               <Stack.Screen name="register" />
             </Stack.Protected>
 
+            <Stack.Protected guard={user?.role === UserRole.RESTAURANT_OWNER}>
+              <Stack.Screen name="(owner)" />
+            </Stack.Protected>
+
+            <Stack.Protected guard={user?.role === UserRole.CUSTOMER}>
+              <Stack.Screen name="(customer)" />
+            </Stack.Protected>
+
             <Stack.Protected guard={!!user}>
-              <Stack.Screen name="(tabs)" />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
             </Stack.Protected>
           </Stack>

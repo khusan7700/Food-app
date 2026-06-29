@@ -35,9 +35,3 @@ export interface MenuItem {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export interface RestaurantWithMenu {
-  restaurant: Restaurant;
-  categories: MenuCategory[];
-  items: MenuItem[];
-}

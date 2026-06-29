@@ -30,6 +30,7 @@ export default function EditRestaurantScreen() {
   const [address, setAddress] = useState("");
   const [cuisineType, setCuisineType] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   if (restaurant && restaurant.id !== loadedId) {
@@ -52,7 +53,7 @@ export default function EditRestaurantScreen() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-restaurant"] });
-      router.back();
+      router.replace("/(owner)/(index)");
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
@@ -65,14 +66,19 @@ export default function EditRestaurantScreen() {
   async function handlePickImage() {
     setIsUploading(true);
     try {
-      const url = await pickAndUploadImage((localUri) => setImageUrl(localUri));
+      const url = await pickAndUploadImage("restaurant", (localUri) =>
+        setImagePreview(localUri),
+      );
       if (url) setImageUrl(url);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
     } finally {
+      setImagePreview(null);
       setIsUploading(false);
     }
   }
+
+  const displayedImage = imagePreview ?? imageUrl;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -85,8 +91,8 @@ export default function EditRestaurantScreen() {
         }}
         disabled={isUploading}
       >
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} />
+        {displayedImage ? (
+          <Image source={{ uri: displayedImage }} style={styles.image} />
         ) : (
           <Text style={styles.imagePickerText}>
             {isUploading ? "Uploading..." : "Tap to change image"}

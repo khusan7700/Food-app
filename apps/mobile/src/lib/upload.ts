@@ -1,6 +1,8 @@
 import * as ImagePicker from "expo-image-picker";
 import { api } from "./axios";
 
+export type UploadType = "user" | "restaurant" | "menu-item";
+
 function guessMimeType(filename: string): string {
   const match = /\.(\w+)$/.exec(filename);
   const ext = match?.[1]?.toLowerCase();
@@ -12,11 +14,17 @@ function guessMimeType(filename: string): string {
 }
 
 // Picks an image from the library and uploads it to the backend's
-// Multer-backed /uploads endpoint. Returns the public URL, or null if
-// the user cancelled or denied permission. If onPicked is given, it
+// Multer-backed /uploads/:type endpoint. Returns the public URL, or null
+// if the user cancelled or denied permission. If onPicked is given, it
 // fires with the local file URI as soon as the image is picked, so the
 // caller can show a preview immediately instead of waiting for the upload.
+//
+// For type "user" and "restaurant" (when the restaurant already exists),
+// the backend attaches the URL to the owning record itself — no follow-up
+// PATCH is needed. For type "menu-item" the caller must still include the
+// returned URL in the create/update request body.
 export async function pickAndUploadImage(
+  type: UploadType,
   onPicked?: (localUri: string) => void,
 ): Promise<string | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,15 +42,23 @@ export async function pickAndUploadImage(
   const filename = asset.fileName ?? `photo-${Date.now()}.jpg`;
 
   const formData = new FormData();
-  formData.append("file", {
-    uri: asset.uri,
-    name: filename,
-    type: guessMimeType(filename),
-  } as unknown as Blob);
+  if (asset.file) {
+    // Web: expo-image-picker exposes the real File object here. asset.uri
+    // is a blob: URL on web, which FormData can't upload as-is.
+    formData.append("file", asset.file, filename);
+  } else {
+    formData.append("file", {
+      uri: asset.uri,
+      name: filename,
+      type: asset.mimeType ?? guessMimeType(filename),
+    } as unknown as Blob);
+  }
 
-  const { data } = await api.post<{ url: string }>("/uploads", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await api.post<{ url: string }>(
+    `/uploads/${type}`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
 
   return data.url;
 }

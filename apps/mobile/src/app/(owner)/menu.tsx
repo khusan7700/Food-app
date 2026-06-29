@@ -24,15 +24,25 @@ function formatPrice(cents: number) {
 
 export default function OwnerMenuScreen() {
   const queryClient = useQueryClient();
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [showAddItem, setShowAddItem] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  );
+  const [categoryName, setCategoryName] = useState("");
+
+  const [showItemModal, setShowItemModal] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemPrice, setNewItemPrice] = useState("");
-  const [newItemImageUrl, setNewItemImageUrl] = useState<string | null>(null);
+  const [itemName, setItemName] = useState("");
+  const [itemDescription, setItemDescription] = useState("");
+  const [itemPrice, setItemPrice] = useState("");
+  const [itemImageUrl, setItemImageUrl] = useState<string | null>(null);
+  const [itemImagePreview, setItemImagePreview] = useState<string | null>(
+    null,
+  );
   const [isUploadingItemImage, setIsUploadingItemImage] = useState(false);
 
   const {
@@ -69,19 +79,53 @@ export default function OwnerMenuScreen() {
     enabled: !!restaurant?.id,
   });
 
-  const { mutate: addCategory, isPending: addingCategory } = useMutation({
+  function closeCategoryModal() {
+    setShowCategoryModal(false);
+    setEditingCategoryId(null);
+    setCategoryName("");
+  }
+
+  function openCreateCategoryModal() {
+    setEditingCategoryId(null);
+    setCategoryName("");
+    setShowCategoryModal(true);
+  }
+
+  function openEditCategoryModal(category: MenuCategory) {
+    setEditingCategoryId(category.id);
+    setCategoryName(category.name);
+    setShowCategoryModal(true);
+  }
+
+  const { mutate: createCategory, isPending: creatingCategory } = useMutation({
     mutationFn: (name: string) => api.post("/menu/categories", { name }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["categories", restaurant?.id],
       });
-      setNewCategoryName("");
-      setShowAddCategory(false);
+      closeCategoryModal();
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
         "Error",
         e.response?.data?.message ?? "Could not create category",
+      );
+    },
+  });
+
+  const { mutate: updateCategory, isPending: updatingCategory } = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      api.patch(`/menu/categories/${id}`, { name }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["categories", restaurant?.id],
+      });
+      closeCategoryModal();
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) => {
+      Alert.alert(
+        "Error",
+        e.response?.data?.message ?? "Could not update category",
       );
     },
   });
@@ -104,36 +148,90 @@ export default function OwnerMenuScreen() {
     },
   });
 
-  function handleAddCategory() {
-    const name = newCategoryName.trim();
+  function handleSaveCategory() {
+    const name = categoryName.trim();
     if (!name) {
       Alert.alert("Name required", "Please enter a category name.");
       return;
     }
-    addCategory(name);
+    if (editingCategoryId) {
+      updateCategory({ id: editingCategoryId, name });
+    } else {
+      createCategory(name);
+    }
   }
 
-  const { mutate: addItem, isPending: addingItem } = useMutation({
+  function closeItemModal() {
+    setShowItemModal(false);
+    setEditingItemId(null);
+    setSelectedCategoryId(null);
+    setItemName("");
+    setItemDescription("");
+    setItemPrice("");
+    setItemImageUrl(null);
+  }
+
+  function openCreateItemModal(categoryId: string) {
+    setEditingItemId(null);
+    setSelectedCategoryId(categoryId);
+    setItemName("");
+    setItemDescription("");
+    setItemPrice("");
+    setItemImageUrl(null);
+    setShowItemModal(true);
+  }
+
+  function openEditItemModal(item: MenuItem) {
+    setEditingItemId(item.id);
+    setSelectedCategoryId(item.categoryId);
+    setItemName(item.name);
+    setItemDescription(item.description ?? "");
+    setItemPrice(formatPrice(item.price));
+    setItemImageUrl(item.imageUrl);
+    setShowItemModal(true);
+  }
+
+  const { mutate: createItem, isPending: creatingItem } = useMutation({
     mutationFn: () =>
       api.post("/menu/items", {
         categoryId: selectedCategoryId,
-        name: newItemName,
-        price: Math.round(parseFloat(newItemPrice) * 100),
-        imageUrl: newItemImageUrl ?? undefined,
+        name: itemName,
+        description: itemDescription.trim() || undefined,
+        price: Math.round(parseFloat(itemPrice) * 100),
+        imageUrl: itemImageUrl ?? undefined,
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["menu-items", restaurant?.id],
       });
-      setNewItemName("");
-      setNewItemPrice("");
-      setNewItemImageUrl(null);
-      setShowAddItem(false);
+      closeItemModal();
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
         "Error",
         e.response?.data?.message ?? "Could not create menu item",
+      );
+    },
+  });
+
+  const { mutate: updateItem, isPending: updatingItem } = useMutation({
+    mutationFn: () =>
+      api.patch(`/menu/items/${editingItemId}`, {
+        name: itemName,
+        description: itemDescription.trim() || undefined,
+        price: Math.round(parseFloat(itemPrice) * 100),
+        imageUrl: itemImageUrl ?? undefined,
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["menu-items", restaurant?.id],
+      });
+      closeItemModal();
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) => {
+      Alert.alert(
+        "Error",
+        e.response?.data?.message ?? "Could not update menu item",
       );
     },
   });
@@ -153,40 +251,43 @@ export default function OwnerMenuScreen() {
     },
   });
 
-  function handleAddItem() {
-    const name = newItemName.trim();
-    const price = newItemPrice.trim();
+  function handleSaveItem() {
+    const name = itemName.trim();
+    const price = itemPrice.trim();
     if (!name || !price || Number.isNaN(parseFloat(price))) {
-      Alert.alert("Required fields", "Item name and a valid price are required.");
+      Alert.alert(
+        "Required fields",
+        "Item name and a valid price are required.",
+      );
       return;
     }
-    if (!selectedCategoryId) {
-      Alert.alert("Error", "No category selected.");
-      return;
+    if (editingItemId) {
+      updateItem();
+    } else {
+      if (!selectedCategoryId) {
+        Alert.alert("Error", "No category selected.");
+        return;
+      }
+      createItem();
     }
-    addItem();
-  }
-
-  function closeAddItemModal() {
-    setShowAddItem(false);
-    setNewItemName("");
-    setNewItemPrice("");
-    setNewItemImageUrl(null);
   }
 
   async function handlePickItemImage() {
     setIsUploadingItemImage(true);
     try {
-      const url = await pickAndUploadImage((localUri) =>
-        setNewItemImageUrl(localUri),
+      const url = await pickAndUploadImage("menu-item", (localUri) =>
+        setItemImagePreview(localUri),
       );
-      if (url) setNewItemImageUrl(url);
+      if (url) setItemImageUrl(url);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
     } finally {
+      setItemImagePreview(null);
       setIsUploadingItemImage(false);
     }
   }
+
+  const displayedItemImage = itemImagePreview ?? itemImageUrl;
 
   const { mutate: deleteItem } = useMutation({
     mutationFn: (id: string) => api.delete(`/menu/items/${id}`),
@@ -218,12 +319,12 @@ export default function OwnerMenuScreen() {
     );
   }
 
+  const isSavingCategory = creatingCategory || updatingCategory;
+  const isSavingItem = creatingItem || updatingItem;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Pressable
-        style={styles.addButton}
-        onPress={() => setShowAddCategory(true)}
-      >
+      <Pressable style={styles.addButton} onPress={openCreateCategoryModal}>
         <Text style={styles.addButtonText}>+ Add Category</Text>
       </Pressable>
 
@@ -239,32 +340,41 @@ export default function OwnerMenuScreen() {
             <View style={styles.categoryBlock}>
               <View style={styles.categoryHeader}>
                 <Text style={styles.categoryName}>{category.name}</Text>
-                <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      "Delete category?",
-                      "All items in this category will also be deleted.",
-                      [
-                        { text: "Cancel", style: "cancel" },
-                        {
-                          text: "Delete",
-                          style: "destructive",
-                          onPress: () => {
-                            deleteCategory(category.id);
+                <View style={styles.categoryActions}>
+                  <Pressable onPress={() => openEditCategoryModal(category)}>
+                    <Text style={styles.editText}>Edit</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      Alert.alert(
+                        "Delete category?",
+                        "All items in this category will also be deleted.",
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          {
+                            text: "Delete",
+                            style: "destructive",
+                            onPress: () => {
+                              deleteCategory(category.id);
+                            },
                           },
-                        },
-                      ],
-                    );
-                  }}
-                >
-                  <Text style={styles.deleteText}>Delete</Text>
-                </Pressable>
+                        ],
+                      );
+                    }}
+                  >
+                    <Text style={styles.deleteText}>Delete</Text>
+                  </Pressable>
+                </View>
               </View>
 
               {categoryItems.map((item) => {
                 const isAvailable = item.isAvailable !== false;
                 return (
-                  <View key={item.id} style={styles.itemRow}>
+                  <Pressable
+                    key={item.id}
+                    style={styles.itemRow}
+                    onPress={() => openEditItemModal(item)}
+                  >
                     {item.imageUrl ? (
                       <Image
                         source={{ uri: item.imageUrl }}
@@ -309,16 +419,13 @@ export default function OwnerMenuScreen() {
                         <Text style={styles.deleteText}>Delete</Text>
                       </Pressable>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               })}
 
               <Pressable
                 style={styles.addItemButton}
-                onPress={() => {
-                  setSelectedCategoryId(category.id);
-                  setShowAddItem(true);
-                }}
+                onPress={() => openCreateItemModal(category.id)}
               >
                 <Text style={styles.addItemText}>+ Add Item</Text>
               </Pressable>
@@ -327,38 +434,44 @@ export default function OwnerMenuScreen() {
         }}
       />
 
-      <Modal visible={showAddCategory} transparent animationType="slide">
+      <Modal visible={showCategoryModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>New Category</Text>
+            <Text style={styles.modalTitle}>
+              {editingCategoryId ? "Edit Category" : "New Category"}
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Category name"
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
+              value={categoryName}
+              onChangeText={setCategoryName}
             />
             <Pressable
               style={styles.button}
-              onPress={handleAddCategory}
-              disabled={addingCategory || !newCategoryName.trim()}
+              onPress={handleSaveCategory}
+              disabled={isSavingCategory || !categoryName.trim()}
             >
-              {addingCategory ? (
+              {isSavingCategory ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Create</Text>
+                <Text style={styles.buttonText}>
+                  {editingCategoryId ? "Save" : "Create"}
+                </Text>
               )}
             </Pressable>
-            <Pressable onPress={() => setShowAddCategory(false)}>
+            <Pressable onPress={closeCategoryModal}>
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      <Modal visible={showAddItem} transparent animationType="slide">
+      <Modal visible={showItemModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>New Item</Text>
+            <Text style={styles.modalTitle}>
+              {editingItemId ? "Edit Item" : "New Item"}
+            </Text>
 
             <Pressable
               style={styles.imagePicker}
@@ -367,8 +480,11 @@ export default function OwnerMenuScreen() {
               }}
               disabled={isUploadingItemImage}
             >
-              {newItemImageUrl ? (
-                <Image source={{ uri: newItemImageUrl }} style={styles.itemImage} />
+              {displayedItemImage ? (
+                <Image
+                  source={{ uri: displayedItemImage }}
+                  style={styles.itemImage}
+                />
               ) : (
                 <Text style={styles.imagePickerText}>
                   {isUploadingItemImage ? "Uploading..." : "Tap to add item image"}
@@ -379,33 +495,43 @@ export default function OwnerMenuScreen() {
             <TextInput
               style={styles.input}
               placeholder="Item name"
-              value={newItemName}
-              onChangeText={setNewItemName}
+              value={itemName}
+              onChangeText={setItemName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Description"
+              value={itemDescription}
+              onChangeText={setItemDescription}
+              multiline
+              numberOfLines={2}
             />
             <TextInput
               style={styles.input}
               placeholder="Price e.g. 8.99"
-              value={newItemPrice}
-              onChangeText={setNewItemPrice}
+              value={itemPrice}
+              onChangeText={setItemPrice}
               keyboardType="decimal-pad"
             />
             <Pressable
               style={styles.button}
-              onPress={handleAddItem}
+              onPress={handleSaveItem}
               disabled={
-                addingItem ||
+                isSavingItem ||
                 isUploadingItemImage ||
-                !newItemName.trim() ||
-                !newItemPrice.trim()
+                !itemName.trim() ||
+                !itemPrice.trim()
               }
             >
-              {addingItem ? (
+              {isSavingItem ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Create</Text>
+                <Text style={styles.buttonText}>
+                  {editingItemId ? "Save" : "Create"}
+                </Text>
               )}
             </Pressable>
-            <Pressable onPress={closeAddItemModal}>
+            <Pressable onPress={closeItemModal}>
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
           </View>
@@ -460,6 +586,14 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 18,
     fontWeight: "700",
+  },
+  categoryActions: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  editText: {
+    color: "#3B82F6",
+    fontSize: 14,
   },
   deleteText: {
     color: "#EF4444",
