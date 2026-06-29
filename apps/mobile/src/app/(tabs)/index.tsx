@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
-import { useApiHealth } from '@/hooks/useApiHealth';
+import { useApiHealth } from '@/hooks/use-api-health';
 
 export default function HomeScreen() {
   const { data, isLoading, isError } = useApiHealth();

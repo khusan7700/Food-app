@@ -9,6 +9,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { DriverModule } from './driver/driver.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UploadsModule } from './uploads/uploads.module';
     MenuModule,
     PaymentsModule,
     OrdersModule,
+    DriverModule,
     UploadsModule,
   ],
   controllers: [AppController],

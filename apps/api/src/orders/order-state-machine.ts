@@ -1,7 +1,7 @@
 import { OrderStatus } from '@food-delivery/types';
 
 // READY -> PENDING_DRIVER -> PICKED_UP: driver is never set to PICKED_UP directly.
-// CANCELLED -> REFUND_PENDING -> REFUNDED: automatic Stripe refund chain.
+// CANCELLED -> REFUND_PENDING -> REFUNDED: automatic Kakao Pay refund chain.
 export const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
   CONFIRMED: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
@@ -16,8 +16,8 @@ export const TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 };
 
 // Subset of TRANSITIONS a restaurant owner is allowed to trigger directly.
-// PENDING_DRIVER/PICKED_UP/DELIVERED are driven by driver-assignment.service.ts (not built yet);
-// REFUND_PENDING/REFUNDED are driven by the Stripe refund cron (not built yet).
+// PENDING_DRIVER/PICKED_UP/DELIVERED are driven by driver/driver-assignment.service.ts;
+// REFUND_PENDING/REFUNDED are driven by payments/payments.scheduler.ts.
 export const OWNER_TRANSITIONS: Record<string, OrderStatus[]> = {
   PENDING: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
   CONFIRMED: [OrderStatus.PREPARING, OrderStatus.CANCELLED],

@@ -44,6 +44,11 @@ export class AuthService {
         email: dto.email,
         password: hashedPassword,
         role: dto.role,
+        // Drivers need a Driver row to go online and receive assignments —
+        // created empty here, filled in once they toggle online / broadcast GPS.
+        ...(dto.role === UserRole.DRIVER
+          ? { driverProfile: { create: {} } }
+          : {}),
       },
     });
 
@@ -87,6 +92,9 @@ export class AuthService {
           name: kakaoUser.kakao_account?.profile?.nickname ?? 'Kakao User',
           email: kakaoUser.kakao_account?.email,
           role: dto.role,
+          ...(dto.role === UserRole.DRIVER
+            ? { driverProfile: { create: {} } }
+            : {}),
         },
       });
     }

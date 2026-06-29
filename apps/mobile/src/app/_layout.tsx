@@ -76,6 +76,10 @@ function RootLayoutNav() {
               <Stack.Screen name="(customer)" />
             </Stack.Protected>
 
+            <Stack.Protected guard={user?.role === UserRole.DRIVER}>
+              <Stack.Screen name="(driver)" />
+            </Stack.Protected>
+
             <Stack.Protected guard={!!user}>
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
             </Stack.Protected>

@@ -8,6 +8,7 @@ import { OrderStatus } from '@food-delivery/types';
 import { OrdersGateway } from '../gateway/orders.gateway';
 import { PaymentsService } from '../payments/payments.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { DriverAssignmentService } from '../driver/driver-assignment.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { canOwnerTransition } from './order-state-machine';
@@ -18,6 +19,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly ordersGateway: OrdersGateway,
     private readonly paymentsService: PaymentsService,
+    private readonly driverAssignmentService: DriverAssignmentService,
   ) {}
 
   async create(customerId: string, dto: CreateOrderDto) {
@@ -147,7 +149,7 @@ export class OrdersService {
       );
     }
 
-    const updated = await this.prisma.order.update({
+    let updated = await this.prisma.order.update({
       where: { id },
       data: { status: dto.status },
       include: { restaurant: true, payment: true },
@@ -157,6 +159,19 @@ export class OrdersService {
 
     if (dto.status === OrderStatus.CANCELLED) {
       await this.refundIfPaid(updated.id, order.payment?.status);
+    }
+
+    // READY is the owner-facing status; the order immediately advances to
+    // PENDING_DRIVER and driver-assignment.service.ts takes over from there
+    // (haversine search, 2-minute timeout, up to 3 attempts).
+    if (dto.status === OrderStatus.READY) {
+      updated = await this.prisma.order.update({
+        where: { id },
+        data: { status: OrderStatus.PENDING_DRIVER },
+        include: { restaurant: true, payment: true },
+      });
+      this.ordersGateway.emitOrderUpdated(updated.customerId, updated);
+      await this.driverAssignmentService.startAssignment(id);
     }
 
     return updated;
