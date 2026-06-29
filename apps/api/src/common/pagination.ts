@@ -1,5 +1,6 @@
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaginatedResult } from '@food-delivery/types';
 
 export class PaginationQueryDto {
   @IsOptional()
@@ -12,11 +13,6 @@ export class PaginationQueryDto {
   @Min(1)
   @Max(50)
   limit?: number = 20;
-}
-
-export interface PaginatedResult<T> {
-  data: T[];
-  nextCursor: string | null;
 }
 
 export function buildPaginatedResult<T extends { id: string }>(

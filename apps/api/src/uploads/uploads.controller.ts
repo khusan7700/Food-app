@@ -1,16 +1,22 @@
 import { randomUUID } from 'crypto';
-import { extname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import { extname, join } from 'path';
 import {
   BadRequestException,
   Controller,
+  Param,
   Post,
+  Request,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtPayload } from '@food-delivery/types';
+import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { isUploadType } from './upload-type';
 import { UploadsService } from './uploads.service';
 
 const ALLOWED_MIME_TYPES = [
@@ -21,16 +27,30 @@ const ALLOWED_MIME_TYPES = [
 ];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+type AuthRequest = ExpressRequest & { user: JwtPayload };
+
 @Controller('uploads')
+@UseGuards(JwtAuthGuard)
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}
 
-  @Post()
-  @UseGuards(JwtAuthGuard)
+  @Post(':type')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: process.env.UPLOAD_DIR ?? 'uploads',
+        destination: (req, _file, callback) => {
+          const type = (req.params as { type?: string }).type ?? '';
+          if (!isUploadType(type)) {
+            callback(
+              new BadRequestException(`Invalid upload type: ${type}`),
+              '',
+            );
+            return;
+          }
+          const dir = join(process.env.UPLOAD_DIR ?? 'uploads', type);
+          if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+          callback(null, dir);
+        },
         filename: (_req, file, callback) => {
           callback(null, `${randomUUID()}${extname(file.originalname)}`);
         },
@@ -48,8 +68,18 @@ export class UploadsController {
       },
     }),
   )
-  upload(@UploadedFile() file: Express.Multer.File) {
+  async upload(
+    @Param('type') type: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: AuthRequest,
+  ) {
+    if (!isUploadType(type)) {
+      throw new BadRequestException(`Invalid upload type: ${type}`);
+    }
     if (!file) throw new BadRequestException('No file uploaded');
-    return { url: this.uploadsService.buildFileUrl(file.filename) };
+
+    const url = this.uploadsService.buildFileUrl(type, file.filename);
+    await this.uploadsService.attach(type, req.user.sub, url);
+    return { url };
   }
 }

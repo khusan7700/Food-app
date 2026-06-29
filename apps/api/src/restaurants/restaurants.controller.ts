@@ -14,8 +14,8 @@ import { Request as ExpressRequest } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { PaginationQueryDto } from '../common/pagination';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
+import { FindRestaurantsQueryDto } from './dto/find-restaurants-query.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { RestaurantsService } from './restaurants.service';
 
@@ -41,7 +41,7 @@ export class RestaurantsController {
   }
 
   @Get()
-  findAll(@Query() query: PaginationQueryDto) {
+  findAll(@Query() query: FindRestaurantsQueryDto) {
     return this.restaurantsService.findAll(query);
   }
 

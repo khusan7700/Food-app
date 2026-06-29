@@ -11,11 +11,12 @@ async function bootstrap() {
     rawBody: true,
   });
 
+  app.enableCors();
+
   const uploadDir = process.env.UPLOAD_DIR ?? 'uploads';
   mkdirSync(uploadDir, { recursive: true });
   app.useStaticAssets(uploadDir, { prefix: '/uploads' });
 
-  app.enableCors();
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({

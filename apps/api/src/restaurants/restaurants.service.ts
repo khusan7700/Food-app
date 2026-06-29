@@ -5,8 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { buildPaginatedResult, PaginationQueryDto } from '../common/pagination';
+import { buildPaginatedResult } from '../common/pagination';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
+import { FindRestaurantsQueryDto } from './dto/find-restaurants-query.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 
 @Injectable()
@@ -37,10 +38,20 @@ export class RestaurantsService {
     return this.prisma.restaurant.findUnique({ where: { ownerId } });
   }
 
-  async findAll(query: PaginationQueryDto) {
+  async findAll(query: FindRestaurantsQueryDto) {
     const limit = query.limit ?? 20;
+    const search = query.search?.trim();
+
     const restaurants = await this.prisma.restaurant.findMany({
-      where: { isOpen: true },
+      where: {
+        isOpen: true,
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { cuisineType: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
       orderBy: { id: 'asc' },
       take: limit + 1,
       ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),

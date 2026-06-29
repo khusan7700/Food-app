@@ -1,23 +1,22 @@
-import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateMenuItemDto {
-  @IsString()
-  categoryId: string;
+  @IsUUID()
+  categoryId!: string;
 
   @IsString()
-  @MinLength(1)
-  name: string;
+  name!: string;
 
+  @IsString()
   @IsOptional()
-  @IsString()
   description?: string;
 
-  // Smallest currency unit (cents), matching schema.prisma's Int field.
+  // Stored in the smallest currency unit (cents).
   @IsInt()
   @Min(0)
-  price: number;
+  price!: number;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   imageUrl?: string;
 }

@@ -25,6 +25,13 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum PaymentStatus {
+  READY
+  APPROVED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String?  @unique
@@ -32,6 +39,7 @@ model User {
   kakaoId   String?  @unique
   name      String
   role      Role
+  avatarUrl String?
   pushToken String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -117,25 +125,40 @@ model MenuItem {
 }
 
 model Order {
-  id                    String      @id @default(uuid())
-  customerId            String
-  restaurantId          String
-  driverId              String?
-  status                OrderStatus @default(PENDING)
-  totalPrice            Int
-  stripePaymentIntentId String?
-  cancelReason          String?
-  deliveryAddress       String
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+  id              String      @id @default(uuid())
+  customerId      String
+  restaurantId    String
+  driverId        String?
+  status          OrderStatus @default(PENDING)
+  totalPrice      Int
+  cancelReason    String?
+  deliveryAddress String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   customer   User        @relation("CustomerOrders", fields: [customerId], references: [id])
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
   driver     User?       @relation("DriverOrders", fields: [driverId], references: [id])
   items      OrderItem[]
   review     Review?
+  payment    Payment?
 
   @@map("orders")
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  orderId    String        @unique
+  tid        String?
+  status     PaymentStatus @default(READY)
+  amount     Int
+  approvedAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
 
 model OrderItem {

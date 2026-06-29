@@ -38,6 +38,23 @@ export class OrdersController {
     return this.ordersService.findForOwnRestaurant(req.user.sub);
   }
 
+  @Get('mine')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  findMine(@Request() req: ExpressRequest & { user: JwtPayload }) {
+    return this.ordersService.findMine(req.user.sub);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.CUSTOMER)
+  findOne(
+    @Param('id') id: string,
+    @Request() req: ExpressRequest & { user: JwtPayload },
+  ) {
+    return this.ordersService.findOne(req.user.sub, id);
+  }
+
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.RESTAURANT_OWNER)

@@ -1,12 +1,10 @@
-import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class CreateCategoryDto {
+  @Transform(({ value }: { value: string }) => value.trim())
   @IsString()
-  @MinLength(1)
-  name: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  order?: number;
+  @IsNotEmpty()
+  @MinLength(2)
+  name!: string;
 }

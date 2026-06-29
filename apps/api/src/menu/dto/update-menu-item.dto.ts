@@ -3,30 +3,34 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
-  MinLength,
 } from 'class-validator';
 
 export class UpdateMenuItemDto {
+  @IsUUID()
   @IsOptional()
+  categoryId?: string;
+
   @IsString()
-  @MinLength(1)
+  @IsOptional()
   name?: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsOptional()
+  // Stored in the smallest currency unit (cents).
   @IsInt()
   @Min(0)
+  @IsOptional()
   price?: number;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   imageUrl?: string;
 
-  @IsOptional()
   @IsBoolean()
+  @IsOptional()
   isAvailable?: boolean;
 }
