@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -149,6 +150,15 @@ export default function OwnerHomeScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.topSection}>
         <View style={styles.header}>
+          {restaurant?.imageUrl ? (
+            <Image
+              source={{ uri: restaurant.imageUrl }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={styles.avatarPlaceholder} />
+          )}
+
           <Text style={styles.name} numberOfLines={1}>
             {restaurant?.name}
           </Text>
@@ -287,6 +297,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    flexShrink: 0,
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "#eee",
+    flexShrink: 0,
   },
   name: {
     flex: 1,

@@ -65,7 +65,7 @@ export default function EditRestaurantScreen() {
   async function handlePickImage() {
     setIsUploading(true);
     try {
-      const url = await pickAndUploadImage();
+      const url = await pickAndUploadImage((localUri) => setImageUrl(localUri));
       if (url) setImageUrl(url);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");

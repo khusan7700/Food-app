@@ -177,7 +177,9 @@ export default function OwnerMenuScreen() {
   async function handlePickItemImage() {
     setIsUploadingItemImage(true);
     try {
-      const url = await pickAndUploadImage();
+      const url = await pickAndUploadImage((localUri) =>
+        setNewItemImageUrl(localUri),
+      );
       if (url) setNewItemImageUrl(url);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");

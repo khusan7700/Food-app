@@ -13,3 +13,5 @@ onlyBuiltDependencies:
   - '@prisma/engines'
   - bcrypt
   - return-fetch
+patchedDependencies:
+  react-native-safe-area-context@5.7.0: patches/react-native-safe-area-context@5.7.0.patch

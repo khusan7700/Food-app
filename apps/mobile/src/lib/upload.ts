@@ -13,8 +13,12 @@ function guessMimeType(filename: string): string {
 
 // Picks an image from the library and uploads it to the backend's
 // Multer-backed /uploads endpoint. Returns the public URL, or null if
-// the user cancelled or denied permission.
-export async function pickAndUploadImage(): Promise<string | null> {
+// the user cancelled or denied permission. If onPicked is given, it
+// fires with the local file URI as soon as the image is picked, so the
+// caller can show a preview immediately instead of waiting for the upload.
+export async function pickAndUploadImage(
+  onPicked?: (localUri: string) => void,
+): Promise<string | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) return null;
 
@@ -25,6 +29,8 @@ export async function pickAndUploadImage(): Promise<string | null> {
   if (result.canceled || !result.assets[0]) return null;
 
   const asset = result.assets[0];
+  onPicked?.(asset.uri);
+
   const filename = asset.fileName ?? `photo-${Date.now()}.jpg`;
 
   const formData = new FormData();

@@ -1,0 +1,10 @@
+
+DB uchun run 
+
+pnpm --filter api prisma migrate dev
+pnpm --filter api prisma studio
+
+
+
+backend & frontend ikklasini run qilish
+pnpm dev

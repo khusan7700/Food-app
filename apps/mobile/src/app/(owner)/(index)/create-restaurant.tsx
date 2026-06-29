@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { api } from "@/lib/axios";
 import { pickAndUploadImage } from "@/lib/upload";
+import { Restaurant } from "@food-delivery/types";
 
 export default function CreateRestaurantScreen() {
   const queryClient = useQueryClient();
@@ -25,13 +26,15 @@ export default function CreateRestaurantScreen() {
 
   const { mutate: createRestaurant, isPending } = useMutation({
     mutationFn: () =>
-      api.post("/restaurants", {
-        name,
-        description,
-        address,
-        cuisineType,
-        imageUrl: imageUrl ?? undefined,
-      }),
+      api
+        .post<Restaurant>("/restaurants", {
+          name,
+          description,
+          address,
+          cuisineType,
+          imageUrl: imageUrl ?? undefined,
+        })
+        .then((res) => res.data),
     onSuccess: (restaurant) => {
       void queryClient.setQueryData(["my-restaurant"], restaurant);
       router.replace("/(owner)/(index)");
@@ -47,7 +50,7 @@ export default function CreateRestaurantScreen() {
   async function handlePickImage() {
     setIsUploading(true);
     try {
-      const url = await pickAndUploadImage();
+      const url = await pickAndUploadImage((localUri) => setImageUrl(localUri));
       if (url) setImageUrl(url);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
