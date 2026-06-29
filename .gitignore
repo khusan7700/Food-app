@@ -41,3 +41,6 @@ pnpm-debug.log*
 
 # coverage
 coverage/
+
+# uploaded files (Multer local disk storage)
+apps/api/uploads/

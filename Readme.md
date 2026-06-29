@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍔 Food Delivery Application
+# 🍔 Food app Application
 
 ### A real-time, three-sided food delivery platform built with NestJS & Expo
 

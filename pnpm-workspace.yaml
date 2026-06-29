@@ -1,3 +1,15 @@
 packages:
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  '@prisma/engines': true
+  bcrypt: true
+  prisma: true
+  return-fetch: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - unrs-resolver
+  - prisma
+  - '@prisma/engines'
+  - bcrypt
+  - return-fetch

@@ -9,6 +9,7 @@ import {
 import { JwtPayload } from '@food-delivery/types';
 import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
+import { KakaoAuthDto } from './dto/kakao-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -27,9 +28,14 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('kakao')
+  kakao(@Body() dto: KakaoAuthDto) {
+    return this.authService.kakaoLogin(dto);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Request() req: ExpressRequest & { user: JwtPayload }) {
-    return req.user;
+    return this.authService.getProfile(req.user.sub);
   }
 }

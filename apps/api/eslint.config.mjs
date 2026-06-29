@@ -35,6 +35,9 @@ export default [
       // NestJS decorators (Body, Request, Response, Param, ...) intentionally
       // share names with Node's global fetch API types.
       'no-redeclare': ['error', { builtinGlobals: false }],
+      // no-undef doesn't understand ambient TS namespaces (Express.Multer.File,
+      // NodeJS.*, ...); tsc already catches genuinely undefined identifiers.
+      'no-undef': 'off',
     },
   },
   eslintPluginPrettierRecommended,

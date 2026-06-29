@@ -1,4 +1,4 @@
-# 🤖 CLAUDE.md — Food Delivery Project v1.2
+# 🤖 CLAUDE.md — Food-app Project v1.2
 
 ## Project Overview
 
@@ -30,7 +30,7 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 | `stripe`                                    | `22.2.1`   | To'lovlar (faqat Stripe)             |
 | `socket.io`                                 | `4.8.3`    | Real-time (server)                   |
 | `socket.io-client`                          | `4.8.3`    | Real-time (client)                   |
-| `uploadthing`                               | `7.7.4`    | Fayl yuklash                         |
+| `multer`                                    | `2.0.2`    | Fayl yuklash (local disk storage)    |
 | `zustand`                                   | `5.0.14`   | State management                     |
 | `react`                                     | `19.2.7`   | UI                                   |
 | `react-native`                              | `0.76.9`   | Mobile                               |
@@ -39,6 +39,7 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 | `expo-linking`                              | `56.0.14`  | Deep linking                         |
 | `expo-constants`                            | `56.0.18`  | App constants                        |
 | `expo-location`                             | `^18.0.0`  | GPS broadcast (driver)               |
+| `expo-image-picker`                         | `~56.0.18` | Rasm tanlash (Multer'ga yuklash)     |
 | `@expo/metro-runtime`                       | `56.0.15`  | Metro bundler                        |
 | `react-native-screens`                      | `4.25.2`   | Native screens                       |
 | `react-native-reanimated`                   | `4.4.1`    | Animatsiyalar                        |
@@ -95,7 +96,6 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 - ko'd yozishdan oldin qaysi fileda qanday kod yoziladi oldindan ko'rsat agar "ok" desam kod yozishni boshla.
 - kod yozilgandan kegin review qilib qayta tekshirish kodda xatolik yoki konflikt bo’lsa o’rnida hal qilish kerak.
 - agar kod noto'gri bo'sa menga yoqmasa "yoq" yoki "no" desam kodni bekor qil.
-- kod yoizlgandan so'ng HISTORY.md filega promptlarni raqam bilan belgilab ket. va yozilgan kodlarni qisqacha qilib tarixlab ber. faqat va raqat. prompt va o'zgartirilgan yoki yaratilgan file ni list kor'rinishida tarixlab qo'y.
 
 ### Kod Uslubi
 
@@ -326,6 +326,7 @@ food-delivery/
 │   │       ├── common/
 │   │       │   ├── pagination.ts
 │   │       │   └── filters/http-exception.filter.ts
+│   │       ├── uploads/      # Multer — local disk storage
 │   │       └── prisma/
 │   └── mobile/                # Expo app (NativeWind + Zustand + gluestack-ui)
 │       ├── global.css
@@ -369,9 +370,10 @@ STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
-UPLOADTHING_TOKEN=
 KAKAO_REST_API_KEY=
 PORT=3000
+UPLOAD_DIR=uploads
+UPLOAD_BASE_URL=http://localhost:3000/uploads
 ```
 
 ### Mobile (`apps/mobile/.env`)
