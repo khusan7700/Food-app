@@ -41,6 +41,7 @@ const config: ExpoConfig = {
     supportsTablet: true,
   },
   android: {
+    package: 'com.khusan.fooddelivery',
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
       foregroundImage: './src/assets/images/android-icon-foreground.png',

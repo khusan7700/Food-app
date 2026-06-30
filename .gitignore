@@ -38,6 +38,7 @@ pnpm-debug.log*
 # editors
 .vscode/*
 !.vscode/extensions.json
+.idea/
 
 # coverage
 coverage/

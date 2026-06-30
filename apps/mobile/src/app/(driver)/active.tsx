@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,7 @@ import {
 import * as Location from "expo-location";
 import { api } from "@/lib/axios";
 import { useDriverLocationBroadcaster } from "@/hooks/use-order-socket";
+import KakaoMap, { KakaoMapHandle } from "@/components/KakaoMap";
 import { Order } from "@food-delivery/types";
 
 type DriverOrder = Order & { restaurant: { id: string; name: string } };
@@ -25,6 +26,11 @@ export default function DriverActiveScreen() {
 
   const queryClient = useQueryClient();
   const locationWatchRef = useRef<Location.LocationSubscription | null>(null);
+  const mapRef = useRef<KakaoMapHandle>(null);
+  const [driverPosition, setDriverPosition] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   // driver's assigned orders — only PICKED_UP needs GPS + Mark Delivered
   const { data: orders = [], isLoading } = useQuery<DriverOrder[]>({
@@ -69,7 +75,15 @@ export default function DriverActiveScreen() {
         distanceInterval: 10,
       },
       (location) => {
-        sendLocation(location.coords.latitude, location.coords.longitude, "high");
+        const { latitude, longitude } = location.coords;
+        sendLocation(latitude, longitude, "high");
+        setDriverPosition((prev) => {
+          if (prev) {
+            mapRef.current?.updateMarker(latitude, longitude);
+            return prev;
+          }
+          return { latitude, longitude };
+        });
       },
     );
   }
@@ -133,6 +147,17 @@ export default function DriverActiveScreen() {
             {activeOrder.status}
           </Text>
         </View>
+
+        {driverPosition ? (
+          <View style={styles.mapWrapper}>
+            <KakaoMap
+              ref={mapRef}
+              latitude={driverPosition.latitude}
+              longitude={driverPosition.longitude}
+              markerTitle="You"
+            />
+          </View>
+        ) : null}
 
         <View style={styles.trackingBadge}>
           <Text style={styles.trackingText}>📡 Broadcasting location...</Text>
@@ -199,6 +224,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     gap: 6,
+    marginBottom: 16,
+  },
+  mapWrapper: {
     marginBottom: 16,
   },
   label: {

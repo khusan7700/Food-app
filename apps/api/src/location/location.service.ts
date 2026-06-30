@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { Redis } from '@upstash/redis';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import Redis from 'ioredis';
 
 export interface DriverCoordinates {
   latitude: number;
@@ -21,16 +21,18 @@ function isDriverCoordinates(value: unknown): value is DriverCoordinates {
 
 // Ephemeral GPS cache, per CLAUDE.md: key `driver:{id}:location`, TTL 300s.
 // No REST surface — only orders.gateway.ts reads/writes this, since location
-// updates flow exclusively over the `/orders` WebSocket namespace.
+// updates flow exclusively over the `/orders` WebSocket namespace. Backed by
+// a local Redis instance (native protocol via ioredis), not Upstash's cloud.
 @Injectable()
-export class LocationService {
+export class LocationService implements OnModuleDestroy {
   private readonly redis: Redis;
 
   constructor() {
-    this.redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    });
+    this.redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
+  }
+
+  async onModuleDestroy() {
+    await this.redis.quit();
   }
 
   async saveDriverLocation(
@@ -41,15 +43,16 @@ export class LocationService {
     await this.redis.set(
       `driver:${driverId}:location`,
       JSON.stringify({ latitude, longitude }),
-      { ex: LOCATION_TTL_SECONDS },
+      'EX',
+      LOCATION_TTL_SECONDS,
     );
   }
 
   async getDriverLocation(driverId: string): Promise<DriverCoordinates | null> {
-    const data = await this.redis.get<string>(`driver:${driverId}:location`);
+    const data = await this.redis.get(`driver:${driverId}:location`);
     if (!data) return null;
 
-    const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data;
+    const parsed: unknown = JSON.parse(data);
     return isDriverCoordinates(parsed) ? parsed : null;
   }
 }
