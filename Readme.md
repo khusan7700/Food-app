@@ -71,36 +71,36 @@ _Customer signs up → finds a restaurant → places an order → pays via Kakao
 
 ### Backend
 
-| Technology | Purpose |
-|---|---|
-| [![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com) | REST API + WebSocket Gateway |
-| [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org) | Primary database |
-| [![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)](https://www.prisma.io) | Type-safe ORM |
-| [![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io) | Caching & live location store |
-| [![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=flat-square&logo=socketdotio&logoColor=white)](https://socket.io) | Real-time order & location events |
-| [![Kakao Pay](https://img.shields.io/badge/Kakao_Pay-FFCD00?style=flat-square&logo=kakaotalk&logoColor=000000)](https://developers.kakao.com) | Payments, refunds |
+| Technology                                                                                                                                        | Purpose                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| [![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com)                         | REST API + WebSocket Gateway      |
+| [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org)     | Primary database                  |
+| [![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)](https://www.prisma.io)                      | Type-safe ORM                     |
+| [![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io)                              | Caching & live location store     |
+| [![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=flat-square&logo=socketdotio&logoColor=white)](https://socket.io)               | Real-time order & location events |
+| [![Kakao Pay](https://img.shields.io/badge/Kakao_Pay-FFCD00?style=flat-square&logo=kakaotalk&logoColor=000000)](https://developers.kakao.com)     | Payments, refunds                 |
 | [![Kakao OAuth](https://img.shields.io/badge/Kakao_OAuth-FFCD00?style=flat-square&logo=kakaotalk&logoColor=000000)](https://developers.kakao.com) | Social login (server-side verify) |
-| ![Multer](https://img.shields.io/badge/Multer-FF6B35?style=flat-square&logo=node.js&logoColor=white) | Image uploads (local disk) |
+| ![Multer](https://img.shields.io/badge/Multer-FF6B35?style=flat-square&logo=node.js&logoColor=white)                                              | Image uploads (local disk)        |
 
 ### Mobile
 
-| Technology | Purpose |
-|---|---|
-| [![Expo](https://img.shields.io/badge/Expo-000020?style=flat-square&logo=expo&logoColor=white)](https://expo.dev) | React Native SDK + Expo Router |
-| [![React Native](https://img.shields.io/badge/React_Native-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactnative.dev) | Cross-platform mobile UI |
-| [![NativeWind](https://img.shields.io/badge/NativeWind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://www.nativewind.dev) | Tailwind CSS for React Native |
-| ![gluestack-ui](https://img.shields.io/badge/gluestack--ui_v2-1F51FF?style=flat-square&logoColor=white) | UI component library |
-| [![Zustand](https://img.shields.io/badge/Zustand-443E38?style=flat-square&logo=react&logoColor=white)](https://zustand-demo.pmnd.rs) | Global state (cart, auth) |
-| [![Kakao Maps](https://img.shields.io/badge/Kakao_Maps-FFCD00?style=flat-square&logo=kakaotalk&logoColor=000000)](https://developers.kakao.com) | Restaurant & driver tracking via WebView |
-| [![expo-location](https://img.shields.io/badge/expo--location-000020?style=flat-square&logo=expo&logoColor=white)](https://docs.expo.dev/versions/latest/sdk/location/) | GPS broadcasting (driver) |
+| Technology                                                                                                                                                              | Purpose                                  |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| [![Expo](https://img.shields.io/badge/Expo-000020?style=flat-square&logo=expo&logoColor=white)](https://expo.dev)                                                       | React Native SDK + Expo Router           |
+| [![React Native](https://img.shields.io/badge/React_Native-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactnative.dev)                               | Cross-platform mobile UI                 |
+| [![NativeWind](https://img.shields.io/badge/NativeWind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://www.nativewind.dev)                          | Tailwind CSS for React Native            |
+| ![gluestack-ui](https://img.shields.io/badge/gluestack--ui_v2-1F51FF?style=flat-square&logoColor=white)                                                                 | UI component library                     |
+| [![Zustand](https://img.shields.io/badge/Zustand-443E38?style=flat-square&logo=react&logoColor=white)](https://zustand-demo.pmnd.rs)                                    | Global state (cart, auth)                |
+| [![Kakao Maps](https://img.shields.io/badge/Kakao_Maps-FFCD00?style=flat-square&logo=kakaotalk&logoColor=000000)](https://developers.kakao.com)                         | Restaurant & driver tracking via WebView |
+| [![expo-location](https://img.shields.io/badge/expo--location-000020?style=flat-square&logo=expo&logoColor=white)](https://docs.expo.dev/versions/latest/sdk/location/) | GPS broadcasting (driver)                |
 
 ### Monorepo
 
-| Technology | Purpose |
-|---|---|
-| [![Turborepo](https://img.shields.io/badge/Turborepo-EF4444?style=flat-square&logo=turborepo&logoColor=white)](https://turbo.build) | Monorepo build system |
-| [![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white)](https://pnpm.io) | Fast, disk-efficient package manager |
-| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org) | Strict mode across all packages |
+| Technology                                                                                                                                        | Purpose                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| [![Turborepo](https://img.shields.io/badge/Turborepo-EF4444?style=flat-square&logo=turborepo&logoColor=white)](https://turbo.build)               | Monorepo build system                |
+| [![pnpm](https://img.shields.io/badge/pnpm-F69220?style=flat-square&logo=pnpm&logoColor=white)](https://pnpm.io)                                  | Fast, disk-efficient package manager |
+| [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org) | Strict mode across all packages      |
 
 ---
 
@@ -119,10 +119,10 @@ _Customer signs up → finds a restaurant → places an order → pays via Kakao
 │   Payments | Driver | Gateway | Reviews        │
 └──────┬─────-─────┬─────────-─┬─────────────────┘
        │           │           │
-  ┌────▼──────┐ ┌─▼──────┐ ┌─▼──────────┐
-  │PostgreSQL │ │        │ │ Kakao API  │
-  │ (Prisma)  │ │ Redis  │ │ Pay + Maps │
-  └───────────┘ └────────┘ └────────────┘
+  ┌────▼──────┐  ┌─▼──────┐  ┌─▼──────────┐
+  │PostgreSQL │  │        │  │ Kakao API  │
+  │ (Prisma)  │  │ Redis  │  │ Pay + Maps │
+  └───────────┘  └────────┘  └────────────┘
 ```
 
 ---
@@ -266,13 +266,13 @@ All errors follow:
 
 ## 🛡 Error Handling
 
-| Scenario                | Behavior                                                                                                                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 💳 Payment failure      | Scheduler polls every 5 min for `READY` payments older than 30 min; unpaid orders auto-cancel with refund                                        |
-| 🔌 WebSocket disconnect | Exponential backoff reconnect (1s → 30s, 10 attempts); state is re-synced via REST on reconnect                                                  |
-| 📍 GPS signal lost      | Last known coordinate is kept with an `accuracy: "none"` flag; customer sees "driver location temporarily unavailable" after 2 minutes           |
-| 🏪 Restaurant timeout   | Customer notified if order isn't confirmed within 30 min; auto-cancelled with `REFUND_PENDING → REFUNDED` chain                                  |
-| 🚗 Driver timeout       | Driver marked `isOnline: false` after 60s without WebSocket response; reassignment attempted up to 3 times                                       |
+| Scenario                | Behavior                                                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 💳 Payment failure      | Scheduler polls every 5 min for `READY` payments older than 30 min; unpaid orders auto-cancel with refund                              |
+| 🔌 WebSocket disconnect | Exponential backoff reconnect (1s → 30s, 10 attempts); state is re-synced via REST on reconnect                                        |
+| 📍 GPS signal lost      | Last known coordinate is kept with an `accuracy: "none"` flag; customer sees "driver location temporarily unavailable" after 2 minutes |
+| 🏪 Restaurant timeout   | Customer notified if order isn't confirmed within 30 min; auto-cancelled with `REFUND_PENDING → REFUNDED` chain                        |
+| 🚗 Driver timeout       | Driver marked `isOnline: false` after 60s without WebSocket response; reassignment attempted up to 3 times                             |
 
 ---
 
