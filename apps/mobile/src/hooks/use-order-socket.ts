@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { Order } from "@food-delivery/types";
 import { getToken } from "@/lib/auth";
@@ -6,10 +6,17 @@ import { getToken } from "@/lib/auth";
 const SERVER_URL =
   process.env.EXPO_PUBLIC_SERVER_URL ?? "http://localhost:3000";
 
-// Returns an incrementing counter so callers can `useEffect` off its change
-// to know an order:created/order:updated event arrived for this restaurant.
+interface RestaurantSocketState {
+  lastEvent: number;
+  assignmentFailedOrderId: string | null;
+}
+
+// Returns event counter + the latest order that failed driver assignment.
 export function useRestaurantSocket(restaurantId: string | null) {
-  const [lastEvent, setLastEvent] = useState(0);
+  const [state, setState] = useState<RestaurantSocketState>({
+    lastEvent: 0,
+    assignmentFailedOrderId: null,
+  });
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -22,8 +29,24 @@ export function useRestaurantSocket(restaurantId: string | null) {
       if (!token || cancelled) return;
 
       socket = io(`${SERVER_URL}/orders`, { auth: { token } });
-      socket.on("order:created", () => setLastEvent((n) => n + 1));
-      socket.on("order:updated", () => setLastEvent((n) => n + 1));
+      socket.on("order:created", () =>
+        setState((s) => ({ ...s, lastEvent: s.lastEvent + 1 })),
+      );
+      socket.on("order:updated", () =>
+        setState((s) => ({ ...s, lastEvent: s.lastEvent + 1 })),
+      );
+      // Fired when all MAX_ATTEMPTS exhausted with no driver accepting.
+      socket.on("driver:assignment:failed", (order: Order) =>
+        setState((s) => ({
+          lastEvent: s.lastEvent + 1,
+          assignmentFailedOrderId: order.id,
+        })),
+      );
+      // Fired per-driver when 2-minute timeout lapses; triggers a refetch
+      // so the owner sees the order is still searching.
+      socket.on("driver:assignment:timeout", () =>
+        setState((s) => ({ ...s, lastEvent: s.lastEvent + 1 })),
+      );
     })();
 
     return () => {
@@ -32,7 +55,7 @@ export function useRestaurantSocket(restaurantId: string | null) {
     };
   }, [restaurantId]);
 
-  return lastEvent;
+  return state;
 }
 
 // Listens for order:updated events scoped to a single order — the gateway
@@ -99,6 +122,42 @@ export function useDriverAssignedSocket(driverId: string | null): Order | null {
 // driver-assignment.service.ts's haversine search can find this driver, and
 // also relays to the customer if this driver currently has a PICKED_UP
 // order). The screen calls the returned function from its expo-location
+// Listens to driver:availability:changed broadcast from the server so customer
+// screens update instantly when any driver goes online or offline — no polling.
+export function useDeliveryAvailable(initialAvailable: boolean | undefined) {
+  const [available, setAvailable] = useState<boolean | undefined>(
+    initialAvailable,
+  );
+
+  useEffect(() => {
+    startTransition(() => setAvailable(initialAvailable));
+  }, [initialAvailable]);
+
+  useEffect(() => {
+    let socket: Socket | undefined;
+    let cancelled = false;
+
+    void (async () => {
+      const token = await getToken();
+      if (!token || cancelled) return;
+      socket = io(`${SERVER_URL}/orders`, { auth: { token } });
+      socket.on(
+        'driver:availability:changed',
+        (data: { available: boolean }) => {
+          setAvailable(data.available);
+        },
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+      socket?.disconnect();
+    };
+  }, []);
+
+  return available;
+}
+
 // watch handler.
 export function useDriverLocationBroadcaster(enabled: boolean) {
   const socketRef = useRef<Socket | null>(null);

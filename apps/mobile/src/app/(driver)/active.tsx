@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -12,6 +13,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import * as Location from "expo-location";
 import { api } from "@/lib/axios";
 import { useDriverLocationBroadcaster } from "@/hooks/use-order-socket";
@@ -49,6 +51,11 @@ export default function DriverActiveScreen() {
     onSuccess: () => {
       stopTracking();
       queryClient.invalidateQueries({ queryKey: ["driver-orders"] });
+      Alert.alert(
+        "🎉 Delivered!",
+        "Order successfully delivered. Great job!",
+        [{ text: "OK", onPress: () => router.replace("/(driver)") }],
+      );
     },
     onError: (e: any) =>
       Alert.alert(
@@ -125,8 +132,12 @@ export default function DriverActiveScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View
-        style={[styles.content, { paddingBottom: insets.bottom + TAB_BAR_OFFSET }]}
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: insets.bottom + TAB_BAR_OFFSET },
+        ]}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Active Delivery</Text>
 
@@ -165,15 +176,7 @@ export default function DriverActiveScreen() {
 
         <Pressable
           style={styles.deliveredButton}
-          onPress={() => {
-            Alert.alert("Confirm delivery?", "Mark this order as delivered?", [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Delivered",
-                onPress: () => markDelivered(activeOrder.id),
-              },
-            ]);
-          }}
+          onPress={() => markDelivered(activeOrder.id)}
           disabled={isPending}
         >
           {isPending ? (
@@ -182,7 +185,7 @@ export default function DriverActiveScreen() {
             <Text style={styles.deliveredButtonText}>Mark as Delivered</Text>
           )}
         </Pressable>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -259,7 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
-    marginTop: "auto",
+    marginTop: 8,
   },
   deliveredButtonText: {
     color: "#fff",

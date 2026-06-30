@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { OrderStatus } from '@food-delivery/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrdersGateway } from '../gateway/orders.gateway';
@@ -10,6 +10,8 @@ const MAX_ATTEMPTS = 3;
 
 interface AssignmentState {
   timer: NodeJS.Timeout;
+  attemptNumber: number;
+  excludedDriverIds: string[];
 }
 
 // Great-circle distance between two lat/lng points, in km.
@@ -42,6 +44,7 @@ export class DriverAssignmentService {
 
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => OrdersGateway))
     private readonly ordersGateway: OrdersGateway,
   ) {}
 
@@ -49,13 +52,36 @@ export class DriverAssignmentService {
     await this.attempt(orderId, 1, []);
   }
 
+  // Called when a driver comes online — picks up any PENDING_DRIVER orders
+  // that have no driver assigned yet (either because no driver was available
+  // when the order was first pushed, or all previous attempts were rejected).
+  async tryAssignPendingOrders() {
+    const unassigned = await this.prisma.order.findMany({
+      where: { status: OrderStatus.PENDING_DRIVER, driverId: null },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    for (const order of unassigned) {
+      // Skip orders that already have an in-flight timer running.
+      if (!this.inFlight.has(order.id)) {
+        await this.attempt(order.id, 1, []);
+      }
+    }
+  }
+
   // Driver explicitly declined — skip the rest of the 2-minute wait and try
-  // the next-nearest driver immediately.
+  // the next-nearest driver immediately, keeping ALL previously excluded drivers.
   async handleDeclined(orderId: string, driverId: string) {
     const state = this.inFlight.get(orderId);
     if (state) clearTimeout(state.timer);
     this.inFlight.delete(orderId);
-    await this.attempt(orderId, (state ? 1 : 0) + 1, [driverId]);
+
+    const nextAttempt = state ? state.attemptNumber + 1 : 2;
+    const excluded = state
+      ? [...state.excludedDriverIds, driverId]
+      : [driverId];
+
+    await this.attempt(orderId, nextAttempt, excluded);
   }
 
   // Driver accepted — nothing left to wait for.
@@ -78,10 +104,16 @@ export class DriverAssignmentService {
     if (!order || order.status !== OrderStatus.PENDING_DRIVER) return;
 
     if (attemptNumber > MAX_ATTEMPTS) {
+      // All nearby drivers rejected — clear excluded list and wait for a new
+      // driver to come online (tryAssignPendingOrders will pick this up).
       this.logger.warn(
-        `No driver accepted order ${orderId} after ${MAX_ATTEMPTS} attempts`,
+        `Order ${orderId}: all ${MAX_ATTEMPTS} drivers declined. Waiting for next available driver.`,
       );
-      this.ordersGateway.emitDriverAssignmentFailed(order.restaurantId, order);
+      await this.prisma.order.update({
+        where: { id: orderId },
+        data: { driverId: null },
+      });
+      this.ordersGateway.emitDriverAssignmentTimeout(order.restaurantId, order);
       return;
     }
 
@@ -92,7 +124,12 @@ export class DriverAssignmentService {
     );
 
     if (!driver) {
-      this.ordersGateway.emitDriverAssignmentFailed(order.restaurantId, order);
+      // No driver available right now — leave order at PENDING_DRIVER with no
+      // driverId so tryAssignPendingOrders() can pick it up when someone logs on.
+      this.logger.log(
+        `Order ${orderId}: no driver in range. Will retry when a driver comes online.`,
+      );
+      this.ordersGateway.emitDriverAssignmentTimeout(order.restaurantId, order);
       return;
     }
 
@@ -115,23 +152,41 @@ export class DriverAssignmentService {
       ]);
     }, RESPONSE_TIMEOUT_MS);
 
-    this.inFlight.set(orderId, { timer });
+    this.inFlight.set(orderId, {
+      timer,
+      attemptNumber,
+      excludedDriverIds: [...excludedDriverIds, driver.userId],
+    });
   }
 
-  // Closest online driver with a known location, excluding anyone already
-  // tried for this order. Searches a 5km radius first, widening to 10km
-  // only if nobody nearer is available.
+  // Closest online driver with a known location who has no active order,
+  // excluding anyone already tried for this order. Searches a 5km radius
+  // first, widening to 10km only if nobody nearer is available.
   private async findNearestAvailableDriver(
     restaurantLat: number,
     restaurantLng: number,
     excludedDriverIds: string[],
   ) {
+    // Drivers who already have an in-progress order must not be offered another
+    // one until they deliver the current one.
+    const busyDriverIds = await this.prisma.order
+      .findMany({
+        where: {
+          status: { in: [OrderStatus.PENDING_DRIVER, OrderStatus.PICKED_UP] },
+          driverId: { not: null },
+        },
+        select: { driverId: true },
+      })
+      .then((rows) => rows.map((r) => r.driverId!));
+
     const candidates = await this.prisma.driver.findMany({
       where: {
         isOnline: true,
         lat: { not: null },
         lng: { not: null },
-        userId: { notIn: excludedDriverIds },
+        userId: {
+          notIn: [...excludedDriverIds, ...busyDriverIds],
+        },
       },
     });
 

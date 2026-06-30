@@ -19,3 +19,11 @@ pnpm dev
 Customer	customer@test.com	password123
 Restaurant Owner	owner@test.com	password123
 Driver	driver@test.com	password123
+
+
+----------------------------------------------------------------------
+android telefon uchun
+
+pkill -f "expo start"
+cd /Users/khusan/Desktop/food/apps/mobile
+npx expo start --lan

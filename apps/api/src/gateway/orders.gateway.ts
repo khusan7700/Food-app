@@ -1,3 +1,4 @@
+import { forwardRef, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
@@ -11,6 +12,7 @@ import { JwtPayload, OrderStatus, UserRole } from '@food-delivery/types';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
 import { LocationService } from '../location/location.service';
+import { DriverAssignmentService } from '../driver/driver-assignment.service';
 
 interface DriverLocationPayload {
   latitude: number;
@@ -28,6 +30,8 @@ export class OrdersGateway implements OnGatewayConnection {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly locationService: LocationService,
+    @Inject(forwardRef(() => DriverAssignmentService))
+    private readonly driverAssignmentService: DriverAssignmentService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -89,6 +93,12 @@ export class OrdersGateway implements OnGatewayConnection {
     const driverId = client.data.userId as string | undefined;
     if (!driverId || client.data.role !== UserRole.DRIVER) return;
 
+    const prev = await this.prisma.driver.findUnique({
+      where: { userId: driverId },
+      select: { lat: true, isOnline: true },
+    });
+    const firstGpsFix = prev?.lat === null && prev?.isOnline === true;
+
     await Promise.all([
       this.prisma.driver.update({
         where: { userId: driverId },
@@ -100,6 +110,12 @@ export class OrdersGateway implements OnGatewayConnection {
         data.longitude,
       ),
     ]);
+
+    // If this is the first GPS fix after going online, pending orders that
+    // were left waiting (because no driver had GPS) can now be assigned.
+    if (firstGpsFix) {
+      void this.driverAssignmentService.tryAssignPendingOrders();
+    }
 
     const order = await this.prisma.order.findFirst({
       where: { driverId, status: OrderStatus.PICKED_UP },
@@ -138,5 +154,10 @@ export class OrdersGateway implements OnGatewayConnection {
     this.server
       .to(`restaurant:${restaurantId}`)
       .emit('driver:assignment:timeout', order);
+  }
+
+  // Broadcast to every connected socket so customer screens update instantly.
+  emitDriverAvailabilityChanged(available: boolean) {
+    this.server.emit('driver:availability:changed', { available });
   }
 }

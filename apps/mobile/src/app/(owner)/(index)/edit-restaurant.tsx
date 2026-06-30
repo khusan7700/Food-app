@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +16,54 @@ import { api } from "@/lib/axios";
 import { pickAndUploadImage } from "@/lib/upload";
 import { Restaurant } from "@food-delivery/types";
 
+interface FormState {
+  loadedId: string | null;
+  name: string;
+  description: string;
+  address: string;
+  cuisineType: string;
+  imageUrl: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
+const initialForm: FormState = {
+  loadedId: null,
+  name: "",
+  description: "",
+  address: "",
+  cuisineType: "",
+  imageUrl: null,
+  lat: null,
+  lng: null,
+};
+
+type FormAction =
+  | { type: "LOAD"; restaurant: Restaurant }
+  | { type: "SET"; field: keyof FormState; value: FormState[keyof FormState] };
+
+function formReducer(state: FormState, action: FormAction): FormState {
+  if (action.type === "LOAD") {
+    return {
+      loadedId: action.restaurant.id,
+      name: action.restaurant.name,
+      description: action.restaurant.description ?? "",
+      address: action.restaurant.address,
+      cuisineType: action.restaurant.cuisineType,
+      imageUrl: action.restaurant.imageUrl ?? null,
+      lat: action.restaurant.lat,
+      lng: action.restaurant.lng,
+    };
+  }
+  return { ...state, [action.field]: action.value };
+}
+
 export default function EditRestaurantScreen() {
   const queryClient = useQueryClient();
+  const [form, dispatch] = useReducer(formReducer, initialForm);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   const { data: restaurant } = useQuery<Restaurant | null>({
     queryKey: ["my-restaurant"],
@@ -25,49 +71,29 @@ export default function EditRestaurantScreen() {
       api.get<Restaurant | null>("/restaurants/mine").then((res) => res.data),
   });
 
-  const [loadedId, setLoadedId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
-  const [cuisineType, setCuisineType] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-
-  if (restaurant && restaurant.id !== loadedId) {
-    setLoadedId(restaurant.id);
-    setName(restaurant.name);
-    setDescription(restaurant.description ?? "");
-    setAddress(restaurant.address);
-    setCuisineType(restaurant.cuisineType);
-    setImageUrl(restaurant.imageUrl);
-    setLat(restaurant.lat);
-    setLng(restaurant.lng);
-  }
+  useEffect(() => {
+    if (restaurant && restaurant.id !== form.loadedId) {
+      dispatch({ type: "LOAD", restaurant });
+    }
+  }, [restaurant?.id]);
 
   const { mutate: updateRestaurant, isPending } = useMutation({
     mutationFn: () =>
       api.patch(`/restaurants/${restaurant?.id}`, {
-        name,
-        description,
-        address,
-        cuisineType,
-        imageUrl: imageUrl ?? undefined,
-        lat,
-        lng,
+        name: form.name,
+        description: form.description,
+        address: form.address,
+        cuisineType: form.cuisineType,
+        imageUrl: form.imageUrl ?? undefined,
+        lat: form.lat,
+        lng: form.lng,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-restaurant"] });
       router.replace("/(owner)/(index)");
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
-      Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Something went wrong",
-      );
+      Alert.alert("Error", e.response?.data?.message ?? "Something went wrong");
     },
   });
 
@@ -76,17 +102,14 @@ export default function EditRestaurantScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== Location.PermissionStatus.GRANTED) {
-        Alert.alert(
-          "Permission denied",
-          "Location permission is required to set your restaurant's coordinates.",
-        );
+        Alert.alert("Permission denied", "Location permission is required.");
         return;
       }
       const position = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
-      setLat(position.coords.latitude);
-      setLng(position.coords.longitude);
+      dispatch({ type: "SET", field: "lat", value: position.coords.latitude });
+      dispatch({ type: "SET", field: "lng", value: position.coords.longitude });
     } catch {
       Alert.alert("Error", "Could not get your current location.");
     } finally {
@@ -98,18 +121,15 @@ export default function EditRestaurantScreen() {
     mutationFn: () =>
       api
         .get<{ lat: number; lng: number }>("/restaurants/geocode", {
-          params: { address },
+          params: { address: form.address },
         })
         .then((res) => res.data),
     onSuccess: (coords) => {
-      setLat(coords.lat);
-      setLng(coords.lng);
+      dispatch({ type: "SET", field: "lat", value: coords.lat });
+      dispatch({ type: "SET", field: "lng", value: coords.lng });
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
-      Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not find that address",
-      );
+      Alert.alert("Error", e.response?.data?.message ?? "Could not find that address");
     },
   });
 
@@ -119,7 +139,7 @@ export default function EditRestaurantScreen() {
       const url = await pickAndUploadImage("restaurant", (localUri) =>
         setImagePreview(localUri),
       );
-      if (url) setImageUrl(url);
+      if (url) dispatch({ type: "SET", field: "imageUrl", value: url });
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
     } finally {
@@ -128,17 +148,17 @@ export default function EditRestaurantScreen() {
     }
   }
 
-  const displayedImage = imagePreview ?? imageUrl;
-
   function handleSubmit() {
-    if (lat === null || lng === null) {
+    if (form.lat === null || form.lng === null) {
       return Alert.alert(
         "Location required",
-        "Set your restaurant's location using your current location or by searching the address — drivers can't be matched without it.",
+        "Set your restaurant's location — drivers can't be matched without it.",
       );
     }
     updateRestaurant();
   }
+
+  const displayedImage = imagePreview ?? form.imageUrl;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -146,9 +166,7 @@ export default function EditRestaurantScreen() {
 
       <Pressable
         style={styles.imagePicker}
-        onPress={() => {
-          void handlePickImage();
-        }}
+        onPress={() => { void handlePickImage(); }}
         disabled={isUploading}
       >
         {displayedImage ? (
@@ -163,28 +181,28 @@ export default function EditRestaurantScreen() {
       <TextInput
         style={styles.input}
         placeholder="Restaurant name"
-        value={name}
-        onChangeText={setName}
+        value={form.name}
+        onChangeText={(v) => dispatch({ type: "SET", field: "name", value: v })}
       />
       <TextInput
         style={styles.input}
         placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
+        value={form.description}
+        onChangeText={(v) => dispatch({ type: "SET", field: "description", value: v })}
         multiline
         numberOfLines={3}
       />
       <TextInput
         style={styles.input}
         placeholder="Address"
-        value={address}
-        onChangeText={setAddress}
+        value={form.address}
+        onChangeText={(v) => dispatch({ type: "SET", field: "address", value: v })}
       />
       <TextInput
         style={styles.input}
         placeholder="Cuisine type"
-        value={cuisineType}
-        onChangeText={setCuisineType}
+        value={form.cuisineType}
+        onChangeText={(v) => dispatch({ type: "SET", field: "cuisineType", value: v })}
       />
 
       <Text style={styles.sectionLabel}>Location *</Text>
@@ -194,26 +212,20 @@ export default function EditRestaurantScreen() {
 
       <Pressable
         style={styles.secondaryButton}
-        onPress={() => {
-          void handleUseCurrentLocation();
-        }}
+        onPress={() => { void handleUseCurrentLocation(); }}
         disabled={isLocating}
       >
         {isLocating ? (
           <ActivityIndicator color="#FF6B35" />
         ) : (
-          <Text style={styles.secondaryButtonText}>
-            📍 Use my current location
-          </Text>
+          <Text style={styles.secondaryButtonText}>📍 Use my current location</Text>
         )}
       </Pressable>
 
       <Pressable
         style={styles.secondaryButton}
         onPress={() => {
-          if (!address) {
-            return Alert.alert("Enter an address first");
-          }
+          if (!form.address) return Alert.alert("Enter an address first");
           geocodeAddress();
         }}
         disabled={isGeocoding}
@@ -221,15 +233,13 @@ export default function EditRestaurantScreen() {
         {isGeocoding ? (
           <ActivityIndicator color="#FF6B35" />
         ) : (
-          <Text style={styles.secondaryButtonText}>
-            🔍 Find coordinates from address
-          </Text>
+          <Text style={styles.secondaryButtonText}>🔍 Find coordinates from address</Text>
         )}
       </Pressable>
 
-      {lat !== null && lng !== null ? (
+      {form.lat !== null && form.lng !== null ? (
         <Text style={styles.coordsText}>
-          ✅ Location set: {lat.toFixed(5)}, {lng.toFixed(5)}
+          ✅ Location set: {form.lat.toFixed(5)}, {form.lng.toFixed(5)}
         </Text>
       ) : (
         <Text style={styles.coordsTextMissing}>No location set yet</Text>
@@ -237,9 +247,7 @@ export default function EditRestaurantScreen() {
 
       <Pressable
         style={styles.button}
-        onPress={() => {
-          handleSubmit();
-        }}
+        onPress={handleSubmit}
         disabled={isPending || isUploading}
       >
         {isPending ? (
@@ -253,75 +261,31 @@ export default function EditRestaurantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 24,
-  },
+  container: { flexGrow: 1, padding: 24, backgroundColor: "#fff" },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 24 },
   imagePicker: {
-    height: 180,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-    overflow: "hidden",
+    height: 180, borderRadius: 12, borderWidth: 1, borderColor: "#ddd",
+    borderStyle: "dashed", alignItems: "center", justifyContent: "center",
+    marginBottom: 16, overflow: "hidden",
   },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  imagePickerText: {
-    color: "#999",
-    fontSize: 14,
-  },
+  image: { width: "100%", height: "100%" },
+  imagePickerText: { color: "#999", fontSize: 14 },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 16,
-    fontSize: 16,
+    borderWidth: 1, borderColor: "#ddd", borderRadius: 8,
+    padding: 14, marginBottom: 16, fontSize: 16,
   },
   button: {
-    backgroundColor: "#FF6B35",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 8,
+    backgroundColor: "#FF6B35", borderRadius: 8,
+    padding: 16, alignItems: "center", marginTop: 8,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   sectionLabel: { fontSize: 15, fontWeight: "700", marginBottom: 2 },
   sectionHint: { fontSize: 12, color: "#999", marginBottom: 12 },
   secondaryButton: {
-    borderWidth: 1,
-    borderColor: "#FF6B35",
-    borderRadius: 8,
-    padding: 14,
-    alignItems: "center",
-    marginBottom: 10,
+    borderWidth: 1, borderColor: "#FF6B35", borderRadius: 8,
+    padding: 14, alignItems: "center", marginBottom: 10,
   },
   secondaryButtonText: { color: "#FF6B35", fontSize: 15, fontWeight: "600" },
-  coordsText: {
-    color: "#22C55E",
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  coordsTextMissing: {
-    color: "#EF4444",
-    fontSize: 13,
-    marginBottom: 16,
-  },
+  coordsText: { color: "#22C55E", fontSize: 13, fontWeight: "600", marginBottom: 16 },
+  coordsTextMissing: { color: "#EF4444", fontSize: 13, marginBottom: 16 },
 });

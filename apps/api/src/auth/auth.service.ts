@@ -113,6 +113,20 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
+  async updateProfile(
+    userId: string,
+    dto: { name?: string; avatarUrl?: string },
+  ) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.name ? { name: dto.name } : {}),
+        ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
+      },
+    });
+    return this.sanitizeUser(user);
+  }
+
   private async fetchKakaoUser(
     accessToken: string,
   ): Promise<KakaoUserResponse> {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { startTransition, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,11 +8,12 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
 import { Order, PaymentStatus } from "@food-delivery/types";
 import { useCustomerOrderSocket } from "@/hooks/use-order-socket";
+import { RatingModal } from "@/components/rating-modal";
 
 type OrderDetail = Order & {
   restaurant: { id: string; name: string };
@@ -38,18 +39,63 @@ const STATUS_ORDER = STATUS_STEPS.map((s) => s.key);
 export default function OrderConfirmationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const [showRating, setShowRating] = useState(false);
   const orderUpdate = useCustomerOrderSocket(id ?? null);
-
-  useEffect(() => {
-    if (orderUpdate) {
-      queryClient.setQueryData(["order", id], orderUpdate);
-    }
-  }, [orderUpdate, id, queryClient]);
 
   const { data: order, isLoading } = useQuery<OrderDetail>({
     queryKey: ["order", id],
     queryFn: () => api.get<OrderDetail>(`/orders/${id}`).then((r) => r.data),
     enabled: !!id,
+  });
+
+  const { data: reviewStatus } = useQuery<{ reviewed: boolean }>({
+    queryKey: ["review-status", id],
+    queryFn: () =>
+      api.get<{ reviewed: boolean }>(`/reviews/order/${id}/status`).then((r) => r.data),
+    enabled: !!id,
+  });
+
+  // reviewStatus undefined = still loading; don't open modal until we know for sure.
+  const reviewStatusLoaded = reviewStatus !== undefined;
+  const alreadyReviewed = reviewStatus?.reviewed ?? false;
+
+  useEffect(() => {
+    if (orderUpdate) {
+      queryClient.setQueryData(["order", id], orderUpdate);
+      if (orderUpdate.status === "DELIVERED" && reviewStatusLoaded && !alreadyReviewed) {
+        startTransition(() => setShowRating(true));
+      }
+    }
+  }, [orderUpdate, id, queryClient, alreadyReviewed, reviewStatusLoaded]);
+
+  // Show modal when both order (DELIVERED) and review status are loaded.
+  useEffect(() => {
+    if (order?.status === "DELIVERED" && reviewStatusLoaded && !alreadyReviewed) {
+      startTransition(() => setShowRating(true));
+    }
+  }, [order?.status, alreadyReviewed, reviewStatusLoaded]);
+
+  // If reviewStatus arrives and user already reviewed — force-close the modal.
+  useEffect(() => {
+    if (alreadyReviewed) {
+      startTransition(() => setShowRating(false));
+    }
+  }, [alreadyReviewed]);
+
+  const { mutate: submitReview, isPending: isSubmittingReview } = useMutation({
+    mutationFn: (data: {
+      restaurantRating: number;
+      driverRating?: number;
+      comment?: string;
+    }) =>
+      api.post("/reviews", { orderId: id, ...data }),
+    onSuccess: () => {
+      setShowRating(false);
+      queryClient.setQueryData(["review-status", id], { reviewed: true });
+    },
+    onError: () => {
+      setShowRating(false);
+    },
   });
 
   if (isLoading) {
@@ -154,6 +200,26 @@ export default function OrderConfirmationScreen() {
           </View>
         )}
 
+        {order?.status === "DELIVERED" && (
+          <View style={styles.deliveredBanner}>
+            <Text style={styles.deliveredEmoji}>🎉</Text>
+            <Text style={styles.deliveredTitle}>Delivered!</Text>
+            <Text style={styles.deliveredSub}>
+              Your order has arrived. Enjoy your meal!
+            </Text>
+            {alreadyReviewed ? (
+              <Text style={styles.reviewedText}>✅ Review submitted</Text>
+            ) : (
+              <Pressable
+                style={styles.rateButton}
+                onPress={() => setShowRating(true)}
+              >
+                <Text style={styles.rateButtonText}>⭐ Rate your order</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         <Pressable
           style={styles.homeButton}
           onPress={() => router.replace("/(customer)/(tabs)/(home)")}
@@ -161,6 +227,14 @@ export default function OrderConfirmationScreen() {
           <Text style={styles.homeButtonText}>Back to Home</Text>
         </Pressable>
       </ScrollView>
+
+      <RatingModal
+        visible={showRating}
+        hasDriver={!!order?.driverId}
+        onSubmit={submitReview}
+        onDismiss={() => setShowRating(false)}
+        isSubmitting={isSubmittingReview}
+      />
     </SafeAreaView>
   );
 }
@@ -224,11 +298,52 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#ddd",
+    marginTop: 8,
   },
   homeButtonText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
+  },
+  deliveredBanner: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 16,
+    gap: 8,
+  },
+  deliveredEmoji: {
+    fontSize: 48,
+  },
+  deliveredTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#16A34A",
+  },
+  deliveredSub: {
+    fontSize: 14,
+    color: "#4B5563",
+    textAlign: "center",
+  },
+  rateButton: {
+    backgroundColor: "#FF6B35",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 8,
+  },
+  rateButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  reviewedText: {
+    fontSize: 14,
+    color: "#16A34A",
+    fontWeight: "600",
+    marginTop: 8,
   },
   trackerTitle: {
     fontSize: 16,

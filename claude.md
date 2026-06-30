@@ -10,46 +10,46 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 
 ## Tech Stack
 
-| Paket                                       | Versiya    | Maqsad                               |
-| ------------------------------------------- | ---------- | ------------------------------------ |
-| `@nestjs/common`                            | `11.1.27`  | NestJS yadro                         |
-| `@nestjs/core`                              | `11.1.27`  | NestJS yadro                         |
-| `@nestjs/platform-express`                  | `11.1.27`  | HTTP adapter                         |
-| `@nestjs/websockets`                        | `11.1.27`  | Socket.IO integratsiya               |
-| `@nestjs/platform-socket.io`                | `11.1.27`  | Socket.IO adapter                    |
-| `@nestjs/passport`                          | `11.0.5`   | Auth (Kakao OAuth)                   |
-| `@nestjs/jwt`                               | `11.0.2`   | JWT tokenlar                         |
-| `@nestjs/schedule`                          | `^4.1.2`   | Cron jobs (to'lov muddati, refund)   |
-| `rxjs`                                      | `7.8.2`    | Reactive streams                     |
-| `reflect-metadata`                          | `0.2.2`    | Decorator support                    |
-| `passport`                                  | `0.7.0`    | Auth middleware                      |
-| `passport-jwt`                              | `4.0.1`    | JWT strategy                         |
-| `passport-oauth2`                           | `1.8.0`    | Kakao OAuth 2.0                      |
-| `@prisma/client`                            | `7.8.0`    | PostgreSQL ORM client                |
-| `@upstash/redis`                            | `1.38.0`   | Redis / GPS cache                    |
-| `socket.io`                                 | `4.8.3`    | Real-time (server)                   |
-| `socket.io-client`                          | `4.8.3`    | Real-time (client)                   |
-| `multer`                                    | `2.0.2`    | Fayl yuklash (local disk storage)    |
-| `zustand`                                   | `5.0.14`   | State management                     |
-| `react`                                     | `19.2.7`   | UI                                   |
-| `react-native`                              | `0.76.9`   | Mobile                               |
-| `expo`                                      | `56.0.12`  | Expo SDK                             |
-| `expo-router`                               | `56.2.11`  | File-based routing                   |
-| `expo-linking`                              | `56.0.14`  | Deep linking                         |
-| `expo-constants`                            | `56.0.18`  | App constants                        |
-| `expo-location`                             | `^18.0.0`  | GPS broadcast (driver)               |
-| `expo-image-picker`                         | `~56.0.18` | Rasm tanlash (Multer'ga yuklash)     |
-| `@expo/metro-runtime`                       | `56.0.15`  | Metro bundler                        |
-| `react-native-screens`                      | `4.25.2`   | Native screens                       |
-| `react-native-reanimated`                   | `4.4.1`    | Animatsiyalar                        |
-| `react-native-gesture-handler`              | `3.0.1`    | Gesture                              |
-| `react-native-safe-area-context`            | `5.8.0`    | Safe area                            |
+| Paket                                       | Versiya    | Maqsad                                 |
+| ------------------------------------------- | ---------- | -------------------------------------- |
+| `@nestjs/common`                            | `11.1.27`  | NestJS yadro                           |
+| `@nestjs/core`                              | `11.1.27`  | NestJS yadro                           |
+| `@nestjs/platform-express`                  | `11.1.27`  | HTTP adapter                           |
+| `@nestjs/websockets`                        | `11.1.27`  | Socket.IO integratsiya                 |
+| `@nestjs/platform-socket.io`                | `11.1.27`  | Socket.IO adapter                      |
+| `@nestjs/passport`                          | `11.0.5`   | Auth (Kakao OAuth)                     |
+| `@nestjs/jwt`                               | `11.0.2`   | JWT tokenlar                           |
+| `@nestjs/schedule`                          | `^4.1.2`   | Cron jobs (to'lov muddati, refund)     |
+| `rxjs`                                      | `7.8.2`    | Reactive streams                       |
+| `reflect-metadata`                          | `0.2.2`    | Decorator support                      |
+| `passport`                                  | `0.7.0`    | Auth middleware                        |
+| `passport-jwt`                              | `4.0.1`    | JWT strategy                           |
+| `passport-oauth2`                           | `1.8.0`    | Kakao OAuth 2.0                        |
+| `@prisma/client`                            | `7.8.0`    | PostgreSQL ORM client                  |
+| `@upstash/redis`                            | `1.38.0`   | Redis / GPS cache                      |
+| `socket.io`                                 | `4.8.3`    | Real-time (server)                     |
+| `socket.io-client`                          | `4.8.3`    | Real-time (client)                     |
+| `multer`                                    | `2.0.2`    | Fayl yuklash (local disk storage)      |
+| `zustand`                                   | `5.0.14`   | State management                       |
+| `react`                                     | `19.2.7`   | UI                                     |
+| `react-native`                              | `0.76.9`   | Mobile                                 |
+| `expo`                                      | `56.0.12`  | Expo SDK                               |
+| `expo-router`                               | `56.2.11`  | File-based routing                     |
+| `expo-linking`                              | `56.0.14`  | Deep linking                           |
+| `expo-constants`                            | `56.0.18`  | App constants                          |
+| `expo-location`                             | `^18.0.0`  | GPS broadcast (driver)                 |
+| `expo-image-picker`                         | `~56.0.18` | Rasm tanlash (Multer'ga yuklash)       |
+| `@expo/metro-runtime`                       | `56.0.15`  | Metro bundler                          |
+| `react-native-screens`                      | `4.25.2`   | Native screens                         |
+| `react-native-reanimated`                   | `4.4.1`    | Animatsiyalar                          |
+| `react-native-gesture-handler`              | `3.0.1`    | Gesture                                |
+| `react-native-safe-area-context`            | `5.8.0`    | Safe area                              |
 | `react-native-webview`                      | `13.16.1`  | Kakao Maps va Kakao Pay WebView bridge |
-| `nativewind`                                | `4.2.5`    | Tailwind for RN                      |
-| `@gluestack-ui/themed`                      | `^1.1.0`   | UI komponentlar                      |
-| `@gluestack-style/react`                    | `^1.0.0`   | gluestack-ui style engine            |
-| `@react-native-kakao/core`                  | `2.4.5`    | Kakao OAuth + Maps                   |
-| `@react-native-async-storage/async-storage` | `^2.1.0`   | Zustand persist storage              |
+| `nativewind`                                | `4.2.5`    | Tailwind for RN                        |
+| `@gluestack-ui/themed`                      | `^1.1.0`   | UI komponentlar                        |
+| `@gluestack-style/react`                    | `^1.0.0`   | gluestack-ui style engine              |
+| `@react-native-kakao/core`                  | `2.4.5`    | Kakao OAuth + Maps                     |
+| `@react-native-async-storage/async-storage` | `^2.1.0`   | Zustand persist storage                |
 
 > ⚠️ **`@rn-primitives/*` va `react-server-dom-webpack` ishlatilmaydi.** Birinchisi `gluestack-ui v2` ga almashtirilgan, ikkinchisi React Server Components uchun va bu loyihaga aloqasi yo'q — qo'shilmasin.
 
@@ -80,8 +80,10 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 ---
 
 ## quidagi filelarni ko'rish taqiqlanadi
+
 .env
 .env.local
+sen hech qanday labrary install qilmaysan
 
 ## Rollar
 

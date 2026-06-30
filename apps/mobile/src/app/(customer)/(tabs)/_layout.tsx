@@ -4,9 +4,14 @@ import { Tabs } from "expo-router";
 import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import { useCartStore } from "@/stores/cart.store";
+
+const CART_HAS_ITEMS_COLOR = "#3B82F6"; // blue
 
 export default function CustomerTabsLayout() {
   const colorScheme = useColorScheme();
+  const cartItemCount = useCartStore((s) => s.items.length);
+  const hasCartItems = cartItemCount > 0;
 
   return (
     <Tabs
@@ -48,10 +53,13 @@ export default function CustomerTabsLayout() {
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "bag.fill", android: "shopping_cart", web: "shopping_cart" }}
-              tintColor={color}
+              tintColor={hasCartItems ? CART_HAS_ITEMS_COLOR : color}
               size={28}
             />
           ),
+          tabBarLabel: ({ color }) => null,
+          tabBarBadge: hasCartItems ? cartItemCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: CART_HAS_ITEMS_COLOR },
         }}
       />
       <Tabs.Screen

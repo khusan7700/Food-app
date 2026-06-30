@@ -31,6 +31,7 @@ export default function CartScreen() {
     clearCart,
   } = useCartStore();
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [addressError, setAddressError] = useState(false);
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -60,9 +61,12 @@ export default function CartScreen() {
   });
 
   function handlePlaceOrder() {
-    if (items.length === 0) return Alert.alert("Your cart is empty");
-    if (!deliveryAddress.trim())
-      return Alert.alert("Please enter your delivery address");
+    if (items.length === 0) return Alert.alert("Savat bo'sh");
+    if (!deliveryAddress.trim()) {
+      setAddressError(true);
+      return;
+    }
+    setAddressError(false);
     placeOrder();
   }
 
@@ -124,12 +128,22 @@ export default function CartScreen() {
           <View style={styles.footer}>
             <Text style={styles.sectionTitle}>Delivery address</Text>
             <TextInput
-              style={styles.addressInput}
+              style={[
+                styles.addressInput,
+                addressError && styles.addressInputError,
+              ]}
               placeholder="Enter your delivery address"
+              placeholderTextColor={addressError ? "#EF4444" : "#aaa"}
               value={deliveryAddress}
-              onChangeText={setDeliveryAddress}
+              onChangeText={(v) => {
+                setDeliveryAddress(v);
+                if (v.trim()) setAddressError(false);
+              }}
               multiline
             />
+            {addressError && (
+              <Text style={styles.addressErrorText}>insert yout address</Text>
+            )}
 
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total ({itemCount} items)</Text>
@@ -279,6 +293,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     minHeight: 80,
     textAlignVertical: "top",
+  },
+  addressInputError: {
+    borderColor: "#EF4444",
+    borderWidth: 1.5,
+  },
+  addressErrorText: {
+    color: "#EF4444",
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 4,
   },
   totalRow: {
     flexDirection: "row",

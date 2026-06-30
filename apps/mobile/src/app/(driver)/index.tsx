@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import { api } from "@/lib/axios";
 import { useAuthStore } from "@/stores/auth.store";
+import { Order } from "@food-delivery/types";
 import {
   useDriverAssignedSocket,
   useDriverLocationBroadcaster,
@@ -47,9 +48,24 @@ export default function DriverHomeScreen() {
 
   // server pushes order:assigned when driver-assignment.service.ts offers us an order
   const assignedOrder = useDriverAssignedSocket(user?.id ?? null);
+
+  // Polling fallback: if the socket event was missed (race condition on connect),
+  // catch up by polling GET /driver/orders every 5s for any PENDING_DRIVER order.
+  const { data: pendingOrder } = useQuery<Order | null>({
+    queryKey: ["driver-pending-order"],
+    queryFn: () =>
+      api
+        .get<Order[]>("/driver/orders")
+        .then((r) => r.data.find((o) => o.status === "PENDING_DRIVER") ?? null),
+    refetchInterval: 5000,
+    enabled: !!user?.id,
+  });
+
+  // Merge socket event and polling result — whichever arrives first wins.
+  const candidateOrder = assignedOrder ?? pendingOrder ?? null;
   const incomingOrder =
-    assignedOrder && assignedOrder.id !== dismissedOrderId
-      ? assignedOrder
+    candidateOrder && candidateOrder.id !== dismissedOrderId
+      ? candidateOrder
       : null;
 
   const isOnline = status?.isOnline ?? false;

@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { OrdersGateway } from '../gateway/orders.gateway';
 import { kakaoPayConfig } from './kakao-pay.config';
 
 interface KakaoReadyResponse {
@@ -19,7 +20,10 @@ interface KakaoReadyResponse {
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ordersGateway: OrdersGateway,
+  ) {}
 
   // partner_user_id/partner_order_id are capped at 100 chars by Kakao Pay;
   // our UUIDs are well within that, so they're passed through as-is.
@@ -132,6 +136,8 @@ export class PaymentsService {
       where: { orderId },
       data: { status: 'APPROVED', approvedAt: new Date() },
     });
+
+    await this.notifyRestaurant(orderId);
     return { success: true };
   }
 
@@ -161,7 +167,21 @@ export class PaymentsService {
       update: { status: 'APPROVED', approvedAt: new Date() },
     });
 
+    await this.notifyRestaurant(orderId);
     return { success: true };
+  }
+
+  // After payment approval, push order:created to the restaurant owner's
+  // socket room so their orders page refreshes and shows "Confirm Order"
+  // without them needing to manually refresh.
+  private async notifyRestaurant(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { restaurant: true, payment: true },
+    });
+    if (order) {
+      this.ordersGateway.emitOrderCreated(order.restaurantId, order);
+    }
   }
 
   async markCancelled(orderId: string) {

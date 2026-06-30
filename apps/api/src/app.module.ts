@@ -10,10 +10,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { DriverModule } from './driver/driver.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    CacheModule,
     PrismaModule,
     AuthModule,
     RestaurantsModule,
@@ -21,6 +24,7 @@ import { DriverModule } from './driver/driver.module';
     PaymentsModule,
     OrdersModule,
     DriverModule,
+    ReviewsModule,
     UploadsModule,
   ],
   controllers: [AppController],

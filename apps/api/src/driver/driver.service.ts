@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,9 +14,17 @@ import { DriverAssignmentService } from './driver-assignment.service';
 export class DriverService {
   constructor(
     private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => OrdersGateway))
     private readonly ordersGateway: OrdersGateway,
     private readonly driverAssignmentService: DriverAssignmentService,
   ) {}
+
+  async isDeliveryAvailable() {
+    const count = await this.prisma.driver.count({
+      where: { isOnline: true, lat: { not: null }, lng: { not: null } },
+    });
+    return { available: count > 0 };
+  }
 
   async toggleOnline(userId: string) {
     const driver = await this.prisma.driver.findUnique({ where: { userId } });
@@ -24,6 +34,17 @@ export class DriverService {
       where: { userId },
       data: { isOnline: !driver.isOnline },
     });
+
+    // Let all connected customers know delivery availability changed in real time.
+    const { available } = await this.isDeliveryAvailable();
+    this.ordersGateway.emitDriverAvailabilityChanged(available);
+
+    // When a driver comes online, immediately try to assign any PENDING_DRIVER
+    // orders that were left waiting because no driver was available before.
+    if (updated.isOnline) {
+      void this.driverAssignmentService.tryAssignPendingOrders();
+    }
+
     return { isOnline: updated.isOnline };
   }
 

@@ -18,6 +18,7 @@ import {
 } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
 import { Restaurant, Order } from "@food-delivery/types";
+import type { Payment } from "@food-delivery/types";
 import { useRestaurantSocket } from "@/hooks/use-order-socket";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -25,6 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
   CONFIRMED: "#3B82F6",
   PREPARING: "#F59E0B",
   READY: "#10B981",
+  PENDING_DRIVER: "#6366F1",
   PICKED_UP: "#8B5CF6",
   DELIVERED: "#6B7280",
   CANCELLED: "#EF4444",
@@ -50,13 +52,15 @@ export default function OwnerHomeScreen() {
       api.get<Restaurant | null>("/restaurants/mine").then((res) => res.data),
   });
 
-  const restaurantUpdate = useRestaurantSocket(restaurant?.id ?? null);
+  const { lastEvent, assignmentFailedOrderId } = useRestaurantSocket(
+    restaurant?.id ?? null,
+  );
 
   useEffect(() => {
-    if (restaurantUpdate) {
+    if (lastEvent) {
       queryClient.invalidateQueries({ queryKey: ["restaurant-orders"] });
     }
-  }, [restaurantUpdate, queryClient]);
+  }, [lastEvent, queryClient]);
 
   const {
     data: orders = [],
@@ -105,15 +109,23 @@ export default function OwnerHomeScreen() {
   }
 
   const activeOrders = orders.filter((o) =>
-    ["PENDING", "CONFIRMED", "PREPARING", "READY", "PICKED_UP"].includes(o.status),
+    ["PENDING", "CONFIRMED", "PREPARING", "READY", "PENDING_DRIVER", "PICKED_UP"].includes(o.status),
   );
 
   const pastOrders = orders.filter((o) =>
     ["DELIVERED", "CANCELLED"].includes(o.status),
   );
 
-  function renderActionButton(order: Order) {
+  function renderActionButton(order: Order & { payment?: Payment | null }) {
     if (order.status === "PENDING") {
+      const isPaid = order.payment?.status === "APPROVED";
+      if (!isPaid) {
+        return (
+          <View style={styles.awaitingPayment}>
+            <Text style={styles.awaitingPaymentText}>⏳ Awaiting payment...</Text>
+          </View>
+        );
+      }
       return (
         <Pressable
           style={[styles.actionButton, { backgroundColor: "#3B82F6" }]}
@@ -141,6 +153,33 @@ export default function OwnerHomeScreen() {
         >
           <Text style={styles.actionButtonText}>Mark Ready</Text>
         </Pressable>
+      );
+    }
+    if (order.status === "PENDING_DRIVER") {
+      const failed = assignmentFailedOrderId === order.id;
+      return (
+        <View
+          style={[
+            styles.searchingCard,
+            { backgroundColor: failed ? "#FEE2E2" : "#EEF2FF" },
+          ]}
+        >
+          {failed ? (
+            <Text style={styles.searchingIcon}>❌</Text>
+          ) : (
+            <ActivityIndicator size="small" color="#6366F1" />
+          )}
+          <Text
+            style={[
+              styles.searchingText,
+              { color: failed ? "#DC2626" : "#6366F1" },
+            ]}
+          >
+            {failed
+              ? "No driver available. Retrying..."
+              : "Searching driver......"}
+          </Text>
+        </View>
       );
     }
     return null;
@@ -416,5 +455,32 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+  },
+  awaitingPayment: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+  },
+  awaitingPaymentText: {
+    fontSize: 13,
+    color: "#92400E",
+    fontWeight: "500",
+  },
+  searchingCard: {
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  searchingIcon: {
+    fontSize: 16,
+  },
+  searchingText: {
+    fontSize: 13,
+    fontWeight: "600",
   },
 });

@@ -15,10 +15,11 @@ import { router } from "expo-router";
 import { api } from "@/lib/axios";
 import { PaginatedResult, Restaurant } from "@food-delivery/types";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useDeliveryAvailable } from "@/hooks/use-order-socket";
 
 export default function CustomerHomeScreen() {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 400); // wait 400ms after user stops typing
+  const debouncedSearch = useDebounce(search, 400);
 
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({
     queryKey: ["restaurants", debouncedSearch],
@@ -29,6 +30,15 @@ export default function CustomerHomeScreen() {
         })
         .then((r) => r.data.data),
   });
+
+  // Initial state fetched once via REST, then kept live by the socket hook.
+  const { data: driverStatusInit } = useQuery<{ available: boolean }>({
+    queryKey: ["driver-available"],
+    queryFn: () =>
+      api.get<{ available: boolean }>("/driver/available").then((r) => r.data),
+  });
+
+  const deliveryAvailable = useDeliveryAvailable(driverStatusInit?.available);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -56,42 +66,58 @@ export default function CustomerHomeScreen() {
               <Text style={styles.emptyText}>No restaurants found</Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.card}
-              onPress={() =>
-                router.push(`/(customer)/(tabs)/(home)/restaurant/${item.id}`)
-              }
-            >
-              {item.imageUrl ? (
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.cardImage}
-                />
-              ) : (
-                <View style={styles.cardImagePlaceholder} />
-              )}
-              <View style={styles.cardBody}>
-                <Text style={styles.cardName}>{item.name}</Text>
-                <Text style={styles.cardCuisine}>{item.cuisineType}</Text>
-                <View style={styles.cardMeta}>
-                  {Number(item.rating) > 0 ? (
-                    <View style={styles.ratingBadge}>
-                      <Text style={styles.ratingStar}>★</Text>
-                      <Text style={styles.ratingValue}>
-                        {Number(item.rating).toFixed(1)}
-                      </Text>
-                    </View>
+          renderItem={({ item }) => {
+              const isEffectivelyOpen = item.isOpen && (deliveryAvailable ?? true);
+              return (
+                <Pressable
+                  style={[styles.card, !isEffectivelyOpen && styles.cardClosed]}
+                  onPress={() =>
+                    router.push(`/(customer)/(tabs)/(home)/restaurant/${item.id}`)
+                  }
+                  disabled={!isEffectivelyOpen}
+                >
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={[styles.cardImage, !isEffectivelyOpen && styles.cardImageClosed]}
+                    />
                   ) : (
-                    <Text style={styles.noRating}>New</Text>
+                    <View style={styles.cardImagePlaceholder} />
                   )}
-                  <View style={styles.openBadge}>
-                    <Text style={styles.openBadgeText}>Open</Text>
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardName}>{item.name}</Text>
+                    <Text style={styles.cardCuisine}>{item.cuisineType}</Text>
+                    <View style={styles.cardMeta}>
+                      {Number(item.rating) > 0 ? (
+                        <View style={styles.ratingBadge}>
+                          <Text style={styles.ratingStar}>★</Text>
+                          <Text style={styles.ratingValue}>
+                            {Number(item.rating).toFixed(1)}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text style={styles.noRating}>New</Text>
+                      )}
+                      <View
+                        style={[
+                          styles.openBadge,
+                          !isEffectivelyOpen && styles.closedBadge,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.openBadgeText,
+                            !isEffectivelyOpen && styles.closedBadgeText,
+                          ]}
+                        >
+                          {isEffectivelyOpen ? "Open" : "Closed"}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
-            </Pressable>
-          )}
+                </Pressable>
+              );
+            }}
         />
       )}
     </SafeAreaView>
@@ -176,6 +202,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#333",
   },
+  cardClosed: {
+    opacity: 0.6,
+  },
+  cardImageClosed: {
+    opacity: 0.5,
+  },
   openBadge: {
     backgroundColor: "#DCFCE7",
     paddingHorizontal: 8,
@@ -186,6 +218,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#16A34A",
     fontWeight: "600",
+  },
+  closedBadge: {
+    backgroundColor: "#FEE2E2",
+  },
+  closedBadgeText: {
+    color: "#DC2626",
   },
   ratingBadge: {
     flexDirection: "row",

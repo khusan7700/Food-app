@@ -23,7 +23,11 @@ interface KakaoMapsNS {
   LatLng: new (lat: number, lng: number) => KakaoLatLng;
   Map: new (container: HTMLElement, options: object) => KakaoMapSdkInstance;
   Marker: new (options: object) => KakaoMarkerSdkInstance;
+  MarkerImage: new (src: string, size: KakaoSize, options?: object) => object;
+  Size: new (w: number, h: number) => KakaoSize;
+  Point: new (x: number, y: number) => object;
 }
+type KakaoSize = object;
 interface KakaoSDK { maps: KakaoMapsNS; }
 
 // ─── Native (iOS/Android): WebView + inline HTML ─────────────────────────────
@@ -39,10 +43,25 @@ function buildHtml(latitude: number, longitude: number, markerTitle: string) {
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false"></script>
   <script>
     var map=null,marker=null;
+    function makeScooterImage(){
+      var canvas=document.createElement('canvas');
+      canvas.width=48;canvas.height=48;
+      var ctx=canvas.getContext('2d');
+      ctx.font='36px serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText('🛵',24,24);
+      var img=new kakao.maps.MarkerImage(
+        canvas.toDataURL(),
+        new kakao.maps.Size(48,48),
+        {offset:new kakao.maps.Point(24,24)}
+      );
+      return img;
+    }
     function init(){
       var c=new kakao.maps.LatLng(${latitude},${longitude});
       map=new kakao.maps.Map(document.getElementById('map'),{center:c,level:4});
-      marker=new kakao.maps.Marker({position:c,map:map,title:${JSON.stringify(markerTitle)}});
+      marker=new kakao.maps.Marker({position:c,map:map,title:${JSON.stringify(markerTitle)},image:makeScooterImage()});
     }
     function updateMarker(lat,lng){
       if(!map||!marker)return;
@@ -70,6 +89,21 @@ const KakaoMapWeb = forwardRef<KakaoMapHandle, KakaoMapProps>(
       const container = containerRef.current as unknown as HTMLElement;
       if (!container) return;
 
+      function makeScooterImage(kakao: KakaoSDK) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 48; canvas.height = 48;
+        const ctx = canvas.getContext("2d")!;
+        ctx.font = "36px serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("🛵", 24, 24);
+        return new kakao.maps.MarkerImage(
+          canvas.toDataURL(),
+          new kakao.maps.Size(48, 48),
+          { offset: new kakao.maps.Point(24, 24) },
+        );
+      }
+
       function initMap() {
         const kakao = (window as unknown as { kakao: KakaoSDK }).kakao;
         const center = new kakao.maps.LatLng(latitude, longitude);
@@ -81,6 +115,7 @@ const KakaoMapWeb = forwardRef<KakaoMapHandle, KakaoMapProps>(
           position: center,
           map: mapInstanceRef.current,
           title: markerTitle,
+          image: makeScooterImage(kakao),
         });
       }
 
