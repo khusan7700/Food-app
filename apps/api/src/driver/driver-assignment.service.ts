@@ -1,5 +1,12 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { OrderStatus } from '@food-delivery/types';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
+import { OrderStatus } from '@order-eats/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrdersGateway } from '../gateway/orders.gateway';
 
@@ -7,6 +14,11 @@ const RESPONSE_TIMEOUT_MS = 2 * 60 * 1000; // 2 daqiqa
 const INITIAL_RADIUS_KM = 5;
 const EXPANDED_RADIUS_KM = 10;
 const MAX_ATTEMPTS = 3;
+
+// No-driver rounds: how many 30-second search cycles before the order is
+// moved to the wait pool where drivers can claim it themselves.
+const SEARCH_ROUNDS = 3;
+const SEARCH_RETRY_MS = 30_000;
 
 interface AssignmentState {
   timer: NodeJS.Timeout;
@@ -38,15 +50,39 @@ function distanceKm(
 // silent timeout moves on to the next-nearest driver. After MAX_ATTEMPTS
 // failures the order is left at PENDING_DRIVER and the owner is notified.
 @Injectable()
-export class DriverAssignmentService {
+export class DriverAssignmentService implements OnModuleInit {
   private readonly logger = new Logger(DriverAssignmentService.name);
   private readonly inFlight = new Map<string, AssignmentState>();
+
+  // Tracks how many "no driver found" search rounds each order has gone through.
+  private readonly searchRounds = new Map<string, number>();
+  // 30-second retry timers for orders waiting between search rounds.
+  private readonly searchRetryTimers = new Map<string, NodeJS.Timeout>();
+  // Orders that exhausted all search rounds — drivers claim them manually.
+  private readonly waitPool = new Set<string>();
 
   constructor(
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => OrdersGateway))
     private readonly ordersGateway: OrdersGateway,
   ) {}
+
+  // On startup, any order already stuck at PENDING_DRIVER with no assigned
+  // driver goes straight to the wait pool — they've clearly been waiting.
+  async onModuleInit() {
+    const stuck = await this.prisma.order.findMany({
+      where: { status: OrderStatus.PENDING_DRIVER, driverId: null },
+      select: { id: true },
+    });
+    for (const { id } of stuck) {
+      this.waitPool.add(id);
+    }
+    if (stuck.length > 0) {
+      this.logger.log(
+        `Loaded ${stuck.length} stuck PENDING_DRIVER order(s) into wait pool on startup.`,
+      );
+    }
+  }
 
   async startAssignment(orderId: string) {
     await this.attempt(orderId, 1, []);
@@ -55,6 +91,7 @@ export class DriverAssignmentService {
   // Called when a driver comes online — picks up any PENDING_DRIVER orders
   // that have no driver assigned yet (either because no driver was available
   // when the order was first pushed, or all previous attempts were rejected).
+  // Wait-pool orders are skipped here — drivers claim those themselves.
   async tryAssignPendingOrders() {
     const unassigned = await this.prisma.order.findMany({
       where: { status: OrderStatus.PENDING_DRIVER, driverId: null },
@@ -62,8 +99,11 @@ export class DriverAssignmentService {
     });
 
     for (const order of unassigned) {
-      // Skip orders that already have an in-flight timer running.
-      if (!this.inFlight.has(order.id)) {
+      if (this.waitPool.has(order.id)) continue;
+      if (
+        !this.inFlight.has(order.id) &&
+        !this.searchRetryTimers.has(order.id)
+      ) {
         await this.attempt(order.id, 1, []);
       }
     }
@@ -84,11 +124,55 @@ export class DriverAssignmentService {
     await this.attempt(orderId, nextAttempt, excluded);
   }
 
-  // Driver accepted — nothing left to wait for.
+  // Driver accepted (either pre-assigned or from the wait pool) — clean up all state.
   handleAccepted(orderId: string) {
     const state = this.inFlight.get(orderId);
     if (state) clearTimeout(state.timer);
     this.inFlight.delete(orderId);
+
+    const retryTimer = this.searchRetryTimers.get(orderId);
+    if (retryTimer) clearTimeout(retryTimer);
+    this.searchRetryTimers.delete(orderId);
+    this.searchRounds.delete(orderId);
+    this.waitPool.delete(orderId);
+  }
+
+  // Returns all orders currently in the wait pool with restaurant details.
+  async getWaitPoolOrders() {
+    const ids = [...this.waitPool];
+    if (ids.length === 0) return [];
+    return this.prisma.order.findMany({
+      where: { id: { in: ids }, status: OrderStatus.PENDING_DRIVER },
+      include: { restaurant: { select: { id: true, name: true, address: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  // Driver self-assigns a wait-pool order. Throws if the order was already
+  // taken (race condition between multiple drivers viewing the same pool).
+  async claimWaitPoolOrder(orderId: string, driverId: string) {
+    if (!this.waitPool.has(orderId)) {
+      throw new BadRequestException('Order is not in the wait pool');
+    }
+
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (
+      !order ||
+      order.status !== OrderStatus.PENDING_DRIVER ||
+      order.driverId !== null
+    ) {
+      this.waitPool.delete(orderId);
+      throw new BadRequestException('Order is no longer available');
+    }
+
+    this.waitPool.delete(orderId);
+    this.handleAccepted(orderId);
+
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { driverId, status: OrderStatus.PICKED_UP },
+      include: { restaurant: true, payment: true },
+    });
   }
 
   private async attempt(
@@ -124,12 +208,30 @@ export class DriverAssignmentService {
     );
 
     if (!driver) {
-      // No driver available right now — leave order at PENDING_DRIVER with no
-      // driverId so tryAssignPendingOrders() can pick it up when someone logs on.
+      const rounds = (this.searchRounds.get(orderId) ?? 0) + 1;
+
+      if (rounds >= SEARCH_ROUNDS) {
+        // Exhausted all search rounds → move to wait pool for manual claim.
+        this.searchRounds.delete(orderId);
+        this.waitPool.add(orderId);
+        this.logger.log(
+          `Order ${orderId}: moved to wait pool after ${SEARCH_ROUNDS} search rounds.`,
+        );
+        this.ordersGateway.emitDriverAssignmentTimeout(order.restaurantId, order);
+        return;
+      }
+
+      this.searchRounds.set(orderId, rounds);
       this.logger.log(
-        `Order ${orderId}: no driver in range. Will retry when a driver comes online.`,
+        `Order ${orderId}: no driver in range (round ${rounds}/${SEARCH_ROUNDS}). Retrying in ${SEARCH_RETRY_MS / 1000}s.`,
       );
       this.ordersGateway.emitDriverAssignmentTimeout(order.restaurantId, order);
+
+      const retryTimer = setTimeout(() => {
+        this.searchRetryTimers.delete(orderId);
+        void this.attempt(orderId, 1, []);
+      }, SEARCH_RETRY_MS);
+      this.searchRetryTimers.set(orderId, retryTimer);
       return;
     }
 

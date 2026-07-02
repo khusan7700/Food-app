@@ -1,5 +1,5 @@
 {
-  "name": "@food-delivery/types",
+  "name": "@order-eats/types",
   "version": "1.0.0",
   "private": true,
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
     "type-check": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "@food-delivery/config": "workspace:*",
+    "@order-eats/config": "workspace:*",
     "typescript": "5.9.3"
   }
 }

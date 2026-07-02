@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 export default function NotFoundScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: "Oops!" }} />
+      <Stack.Screen options={{ title: "이런!" }} />
       <View style={styles.container}>
         <Text style={styles.title}>Bu sahifa mavjud emas.</Text>
         <Link href="/" style={styles.link}>
@@ -34,6 +34,6 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: "#FF6B35",
+    color: "#0077CC",
   },
 });

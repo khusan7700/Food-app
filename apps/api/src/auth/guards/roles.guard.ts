@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtPayload, UserRole } from '@food-delivery/types';
+import { JwtPayload, UserRole } from '@order-eats/types';
 import { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 

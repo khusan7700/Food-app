@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { buildPaginatedResult } from '../common/pagination';
 import { CreateReviewDto } from './dto/create-review.dto';
-import { OrderStatus } from '@food-delivery/types';
+import { OrderStatus } from '@order-eats/types';
 
 @Injectable()
 export class ReviewsService {

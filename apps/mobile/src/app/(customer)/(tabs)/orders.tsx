@@ -10,15 +10,15 @@ import { useQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { api } from "@/lib/axios";
-import { Order } from "@food-delivery/types";
+import { Order } from "@order-eats/types";
 
 type OrderWithRestaurant = Order & {
   restaurant: { id: string; name: string };
   items: { id: string }[];
 };
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -27,11 +27,24 @@ const STATUS_COLORS: Record<string, string> = {
   PREPARING: "#8B5CF6",
   READY: "#06B6D4",
   PENDING_DRIVER: "#06B6D4",
-  PICKED_UP: "#FF6B35",
+  PICKED_UP: "#0077CC",
   DELIVERED: "#22C55E",
   CANCELLED: "#EF4444",
   REFUND_PENDING: "#EF4444",
   REFUNDED: "#999999",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "결제 대기",
+  CONFIRMED: "주문 확인됨",
+  PREPARING: "준비 중",
+  READY: "준비 완료",
+  PENDING_DRIVER: "드라이버 배정 중",
+  PICKED_UP: "픽업 완료",
+  DELIVERED: "배달 완료",
+  CANCELLED: "취소됨",
+  REFUND_PENDING: "환불 대기",
+  REFUNDED: "환불 완료",
 };
 
 function OrderCard({
@@ -42,7 +55,7 @@ function OrderCard({
   onPress: () => void;
 }) {
   const statusColor = STATUS_COLORS[order.status] ?? "#999";
-  const date = new Date(order.createdAt).toLocaleDateString("en-US", {
+  const date = new Date(order.createdAt).toLocaleDateString("ko-KR", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -56,7 +69,7 @@ function OrderCard({
           style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}
         >
           <Text style={[styles.statusText, { color: statusColor }]}>
-            {order.status}
+            {STATUS_LABELS[order.status] ?? order.status}
           </Text>
         </View>
       </View>
@@ -65,9 +78,9 @@ function OrderCard({
 
       <View style={styles.cardFooter}>
         <Text style={styles.items}>
-          {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+          {order.items.length}개
         </Text>
-        <Text style={styles.total}>${formatPrice(order.totalPrice)}</Text>
+        <Text style={styles.total}>₩{formatPrice(order.totalPrice)}</Text>
       </View>
     </Pressable>
   );
@@ -84,7 +97,7 @@ export default function CustomerOrdersScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -92,13 +105,13 @@ export default function CustomerOrdersScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.title}>My Orders</Text>
+      <Text style={styles.title}>내 주문</Text>
 
       {orders.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No orders yet</Text>
+          <Text style={styles.emptyText}>아직 주문이 없습니다</Text>
           <Text style={styles.emptySubText}>
-            Your order history will appear here
+            주문 내역이 여기에 표시됩니다
           </Text>
         </View>
       ) : (

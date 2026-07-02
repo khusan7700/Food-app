@@ -18,7 +18,7 @@ export default function DriverLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "홈",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "house.fill", android: "home", web: "home" }}
@@ -31,7 +31,7 @@ export default function DriverLayout() {
       <Tabs.Screen
         name="active"
         options={{
-          title: "Active",
+          title: "배달중",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "car.fill", android: "local_shipping", web: "local_shipping" }}
@@ -42,9 +42,22 @@ export default function DriverLayout() {
         }}
       />
       <Tabs.Screen
+        name="waiting"
+        options={{
+          title: "대기",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "tray.full.fill", android: "inbox", web: "inbox" }}
+              tintColor={color}
+              size={28}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
-          title: "History",
+          title: "내역",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "clock.fill", android: "history", web: "history" }}
@@ -57,7 +70,7 @@ export default function DriverLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "프로필",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "person.crop.circle.fill", android: "account_circle", web: "account_circle" }}

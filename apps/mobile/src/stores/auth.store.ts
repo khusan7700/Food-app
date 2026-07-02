@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { User, UserRole } from '@food-delivery/types';
+import { User, UserRole } from '@order-eats/types';
 import { api } from '@/lib/axios';
 import { deleteToken, getToken, saveToken } from '@/lib/auth';
 

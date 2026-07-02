@@ -7,7 +7,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { JwtPayload } from '@food-delivery/types';
+import { JwtPayload } from '@order-eats/types';
 import { Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { KakaoAuthDto } from './dto/kakao-auth.dto';

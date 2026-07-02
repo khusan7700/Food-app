@@ -8,7 +8,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { JwtPayload, OrderStatus, UserRole } from '@food-delivery/types';
+import { JwtPayload, OrderStatus, UserRole } from '@order-eats/types';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
 import { LocationService } from '../location/location.service';
@@ -159,5 +159,10 @@ export class OrdersGateway implements OnGatewayConnection {
   // Broadcast to every connected socket so customer screens update instantly.
   emitDriverAvailabilityChanged(available: boolean) {
     this.server.emit('driver:availability:changed', { available });
+  }
+
+  // Broadcast restaurant open/closed change to every customer screen.
+  emitRestaurantStatusChanged(restaurantId: string, isOpen: boolean) {
+    this.server.emit('restaurant:status:changed', { restaurantId, isOpen });
   }
 }

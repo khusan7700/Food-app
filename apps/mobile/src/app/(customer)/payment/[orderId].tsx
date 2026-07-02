@@ -13,7 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { WebView, WebViewNavigation } from "react-native-webview";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
-import { Order } from "@food-delivery/types";
+import { Order } from "@order-eats/types";
 
 export default function KakaoPayScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
@@ -81,7 +81,7 @@ export default function KakaoPayScreen() {
       setResolved(true);
       router.replace(`/(customer)/order/${orderId}`);
     },
-    onError: () => Alert.alert("Error", "Could not mark as paid."),
+    onError: () => Alert.alert("오류", "결제 처리에 실패했습니다."),
   });
 
   function renderTestApproveButton(inline: boolean) {
@@ -101,19 +101,19 @@ export default function KakaoPayScreen() {
 
   function handleNavigationChange(navState: WebViewNavigation) {
     if (navState.url.includes("/payments/kakao/approve")) {
-      finishWith("Payment successful!");
+      finishWith("결제가 완료되었습니다!");
     } else if (navState.url.includes("/payments/kakao/cancel")) {
-      finishWith("Payment was cancelled.");
+      finishWith("결제가 취소되었습니다.");
     } else if (navState.url.includes("/payments/kakao/fail")) {
-      finishWith("Payment failed. Please try again.");
+      finishWith("결제에 실패했습니다. 다시 시도해 주세요.");
     }
   }
 
   if (isPending || !redirectUrl) {
     return (
       <SafeAreaView style={styles.centered} edges={["top"]}>
-        <ActivityIndicator size="large" color="#FF6B35" />
-        <Text style={styles.loadingText}>Starting Kakao Pay...</Text>
+        <ActivityIndicator size="large" color="#0077CC" />
+        <Text style={styles.loadingText}>카카오페이 시작 중...</Text>
         {renderTestApproveButton(true)}
       </SafeAreaView>
     );
@@ -122,9 +122,9 @@ export default function KakaoPayScreen() {
   if (isError) {
     return (
       <SafeAreaView style={styles.centered} edges={["top"]}>
-        <Text style={styles.errorText}>Could not start Kakao Pay payment.</Text>
+        <Text style={styles.errorText}>카카오페이 결제를 시작할 수 없습니다.</Text>
         <Pressable style={styles.retryButton} onPress={() => startPayment()}>
-          <Text style={styles.retryButtonText}>Try Again</Text>
+          <Text style={styles.retryButtonText}>다시 시도</Text>
         </Pressable>
         {renderTestApproveButton(true)}
       </SafeAreaView>
@@ -175,7 +175,7 @@ export default function KakaoPayScreen() {
         startInLoadingState
         renderLoading={() => (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#FF6B35" />
+            <ActivityIndicator size="large" color="#0077CC" />
           </View>
         )}
       />
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   retryButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 32,

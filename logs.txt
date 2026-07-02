@@ -16,9 +16,11 @@ pnpm dev
 
 
 
-Customer	customer@test.com	password123
-Restaurant Owner	owner@test.com	password123
-Driver	driver@test.com	password123
+customer@test.com
+owner@test.com
+driver@test.com
+
+password123
 
 
 ----------------------------------------------------------------------

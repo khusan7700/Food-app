@@ -1,4 +1,4 @@
-import { UserRole } from "@food-delivery/types";
+import { UserRole } from "@order-eats/types";
 import { login as kakaoLogin } from "@react-native-kakao/user";
 import { useState } from "react";
 import {
@@ -23,14 +23,13 @@ export default function LoginScreen() {
   const [isKakaoLoading, setIsKakaoLoading] = useState(false);
 
   async function handleLogin() {
-    if (!email || !password) return Alert.alert("Please fill in all fields");
+    if (!email || !password) return Alert.alert("모든 필드를 입력해 주세요");
     setIsLoading(true);
 
     try {
       await login(email, password);
-      router.replace("/");
     } catch {
-      Alert.alert("Login failed", "Invalid email or password");
+      Alert.alert("로그인 실패", "이메일 또는 비밀번호가 올바르지 않습니다");
     } finally {
       setIsLoading(false);
     }
@@ -42,9 +41,8 @@ export default function LoginScreen() {
     try {
       const { accessToken } = await kakaoLogin();
       await loginWithKakao(accessToken, UserRole.CUSTOMER);
-      router.replace("/");
     } catch {
-      Alert.alert("Kakao login failed", "Please try again");
+      Alert.alert("카카오 로그인 실패", "다시 시도해 주세요");
     } finally {
       setIsKakaoLoading(false);
     }
@@ -52,11 +50,11 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome back</Text>
+      <Text style={styles.title}>다시 오셨군요</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="이메일"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -65,7 +63,7 @@ export default function LoginScreen() {
 
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="비밀번호"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -81,7 +79,7 @@ export default function LoginScreen() {
         {isLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>로그인</Text>
         )}
       </Pressable>
 
@@ -96,13 +94,13 @@ export default function LoginScreen() {
           {isKakaoLoading ? (
             <ActivityIndicator color="#3C1E1E" />
           ) : (
-            <Text style={styles.kakaoButtonText}>Continue with Kakao</Text>
+            <Text style={styles.kakaoButtonText}>카카오로 계속하기</Text>
           )}
         </Pressable>
       )}
 
       <Pressable onPress={() => router.push("/register")}>
-        <Text style={styles.link}>Don&apos;t have an account? Register</Text>
+        <Text style={styles.link}>계정이 없으신가요? 회원가입</Text>
       </Pressable>
     </View>
   );
@@ -125,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
@@ -134,5 +132,5 @@ const styles = StyleSheet.create({
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   kakaoButton: { backgroundColor: "#FEE500" },
   kakaoButtonText: { color: "#3C1E1E", fontSize: 16, fontWeight: "600" },
-  link: { textAlign: "center", color: "#FF6B35" },
+  link: { textAlign: "center", color: "#0077CC" },
 });

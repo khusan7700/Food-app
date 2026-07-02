@@ -33,7 +33,7 @@ export function ProfileEditor() {
       setIsEditing(false);
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
-      Alert.alert("Error", e.response?.data?.message ?? "Could not save changes");
+      Alert.alert("오류", e.response?.data?.message ?? "변경 사항을 저장할 수 없습니다");
     },
   });
 
@@ -47,7 +47,7 @@ export function ProfileEditor() {
       );
       if (url) updateUser({ avatarUrl: url });
     } catch {
-      Alert.alert("Upload failed", "Could not upload image.");
+      Alert.alert("업로드 실패", "이미지를 업로드할 수 없습니다.");
     } finally {
       setAvatarPreview(null);
       setIsUploading(false);
@@ -83,11 +83,11 @@ export function ProfileEditor() {
           </View>
         )}
       </Pressable>
-      <Text style={styles.avatarHint}>Tap to change photo</Text>
+      <Text style={styles.avatarHint}>탭하여 사진 변경</Text>
 
       <View style={styles.card}>
         <View style={styles.row}>
-          <Text style={styles.label}>Name</Text>
+          <Text style={styles.label}>이름</Text>
           {isEditing ? (
             <TextInput
               style={styles.input}
@@ -102,12 +102,12 @@ export function ProfileEditor() {
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>이메일</Text>
           <Text style={[styles.value, styles.muted]}>{user?.email}</Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Role</Text>
+          <Text style={styles.label}>역할</Text>
           <Text style={[styles.value, styles.muted]}>{user?.role}</Text>
         </View>
       </View>
@@ -118,21 +118,21 @@ export function ProfileEditor() {
             {isSaving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>저장</Text>
             )}
           </Pressable>
           <Pressable style={styles.cancelButton} onPress={handleCancel}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>취소</Text>
           </Pressable>
         </View>
       ) : (
         <Pressable style={styles.editButton} onPress={() => setIsEditing(true)}>
-          <Text style={styles.editButtonText}>Edit Profile</Text>
+          <Text style={styles.editButtonText}>프로필 수정</Text>
         </Pressable>
       )}
 
       <Pressable style={styles.logoutButton} onPress={() => { void logout(); }}>
-        <Text style={styles.logoutText}>Logout</Text>
+        <Text style={styles.logoutText}>로그아웃</Text>
       </Pressable>
     </ScrollView>
   );
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   avatarPlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     borderBottomWidth: 1.5,
-    borderBottomColor: "#FF6B35",
+    borderBottomColor: "#0077CC",
     minWidth: 160,
     textAlign: "right",
     paddingVertical: 2,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   saveButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     padding: 14,
     alignItems: "center",
@@ -221,13 +221,13 @@ const styles = StyleSheet.create({
   editButton: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "#FF6B35",
+    borderColor: "#0077CC",
     borderRadius: 8,
     padding: 14,
     alignItems: "center",
     marginBottom: 12,
   },
-  editButtonText: { color: "#FF6B35", fontSize: 15, fontWeight: "600" },
+  editButtonText: { color: "#0077CC", fontSize: 15, fontWeight: "600" },
   logoutButton: {
     width: "100%",
     backgroundColor: "#FF3B30",

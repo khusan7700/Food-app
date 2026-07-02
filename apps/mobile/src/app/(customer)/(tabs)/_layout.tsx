@@ -23,7 +23,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="(home)"
         options={{
-          title: "Home",
+          title: "홈",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "house.fill", android: "home", web: "home" }}
@@ -36,7 +36,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="search"
         options={{
-          title: "Search",
+          title: "검색",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "magnifyingglass", android: "search", web: "search" }}
@@ -49,7 +49,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="cart"
         options={{
-          title: "Cart",
+          title: "장바구니",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "bag.fill", android: "shopping_cart", web: "shopping_cart" }}
@@ -65,7 +65,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: "Orders",
+          title: "주문",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "shippingbox.fill", android: "local_shipping", web: "inventory" }}
@@ -78,7 +78,7 @@ export default function CustomerTabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "프로필",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "person.crop.circle.fill", android: "account_circle", web: "account_circle" }}

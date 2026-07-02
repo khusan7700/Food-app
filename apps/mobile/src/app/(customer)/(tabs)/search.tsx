@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 export default function CustomerSearchScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Customer Search</Text>
+      <Text style={styles.text}>음식점 검색</Text>
     </View>
   );
 }

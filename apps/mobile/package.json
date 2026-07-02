@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@food-delivery/types": "workspace:*",
+    "@order-eats/types": "workspace:*",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-kakao/core": "2.4.5",
     "@react-native-kakao/user": "2.4.5",

@@ -16,10 +16,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
 import { pickAndUploadImage } from "@/lib/upload";
-import { MenuCategory, MenuItem, Restaurant } from "@food-delivery/types";
+import { MenuCategory, MenuItem, Restaurant } from "@order-eats/types";
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 export default function OwnerMenuScreen() {
@@ -107,8 +107,8 @@ export default function OwnerMenuScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not create category",
+        "오류",
+        e.response?.data?.message ?? "카테고리를 만들 수 없습니다",
       );
     },
   });
@@ -124,8 +124,8 @@ export default function OwnerMenuScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not update category",
+        "오류",
+        e.response?.data?.message ?? "카테고리를 수정할 수 없습니다",
       );
     },
   });
@@ -142,8 +142,8 @@ export default function OwnerMenuScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not delete category",
+        "오류",
+        e.response?.data?.message ?? "카테고리를 삭제할 수 없습니다",
       );
     },
   });
@@ -151,7 +151,7 @@ export default function OwnerMenuScreen() {
   function handleSaveCategory() {
     const name = categoryName.trim();
     if (!name) {
-      Alert.alert("Name required", "Please enter a category name.");
+      Alert.alert("이름 필요", "카테고리 이름을 입력해 주세요.");
       return;
     }
     if (editingCategoryId) {
@@ -186,7 +186,7 @@ export default function OwnerMenuScreen() {
     setSelectedCategoryId(item.categoryId);
     setItemName(item.name);
     setItemDescription(item.description ?? "");
-    setItemPrice(formatPrice(item.price));
+    setItemPrice(String(Math.round(item.price)));
     setItemImageUrl(item.imageUrl);
     setShowItemModal(true);
   }
@@ -197,7 +197,7 @@ export default function OwnerMenuScreen() {
         categoryId: selectedCategoryId,
         name: itemName,
         description: itemDescription.trim() || undefined,
-        price: Math.round(parseFloat(itemPrice) * 100),
+        price: Math.round(parseFloat(itemPrice)),
         imageUrl: itemImageUrl ?? undefined,
       }),
     onSuccess: () => {
@@ -208,8 +208,8 @@ export default function OwnerMenuScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not create menu item",
+        "오류",
+        e.response?.data?.message ?? "메뉴를 만들 수 없습니다",
       );
     },
   });
@@ -219,7 +219,7 @@ export default function OwnerMenuScreen() {
       api.patch(`/menu/items/${editingItemId}`, {
         name: itemName,
         description: itemDescription.trim() || undefined,
-        price: Math.round(parseFloat(itemPrice) * 100),
+        price: Math.round(parseFloat(itemPrice)),
         imageUrl: itemImageUrl ?? undefined,
       }),
     onSuccess: () => {
@@ -230,8 +230,8 @@ export default function OwnerMenuScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not update menu item",
+        "오류",
+        e.response?.data?.message ?? "메뉴를 수정할 수 없습니다",
       );
     },
   });
@@ -245,8 +245,8 @@ export default function OwnerMenuScreen() {
       }),
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not update availability",
+        "오류",
+        e.response?.data?.message ?? "가용 여부를 변경할 수 없습니다",
       );
     },
   });
@@ -256,8 +256,8 @@ export default function OwnerMenuScreen() {
     const price = itemPrice.trim();
     if (!name || !price || Number.isNaN(parseFloat(price))) {
       Alert.alert(
-        "Required fields",
-        "Item name and a valid price are required.",
+        "필수 항목",
+        "메뉴 이름과 유효한 가격을 입력해 주세요.",
       );
       return;
     }
@@ -265,7 +265,7 @@ export default function OwnerMenuScreen() {
       updateItem();
     } else {
       if (!selectedCategoryId) {
-        Alert.alert("Error", "No category selected.");
+        Alert.alert("오류", "카테고리가 선택되지 않았습니다.");
         return;
       }
       createItem();
@@ -280,7 +280,7 @@ export default function OwnerMenuScreen() {
       );
       if (url) setItemImageUrl(url);
     } catch {
-      Alert.alert("Upload failed", "Could not upload image. Please try again.");
+      Alert.alert("업로드 실패", "이미지를 업로드할 수 없습니다. 다시 시도해 주세요.");
     } finally {
       setItemImagePreview(null);
       setIsUploadingItemImage(false);
@@ -301,7 +301,7 @@ export default function OwnerMenuScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -312,7 +312,7 @@ export default function OwnerMenuScreen() {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
           <Text style={styles.emptyText}>
-            Create your restaurant on the Orders tab first.
+            먼저 주문 탭에서 음식점을 등록하세요.
           </Text>
         </View>
       </SafeAreaView>
@@ -325,7 +325,7 @@ export default function OwnerMenuScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Pressable style={styles.addButton} onPress={openCreateCategoryModal}>
-        <Text style={styles.addButtonText}>+ Add Category</Text>
+        <Text style={styles.addButtonText}>+ 카테고리 추가</Text>
       </Pressable>
 
       <FlatList
@@ -342,17 +342,17 @@ export default function OwnerMenuScreen() {
                 <Text style={styles.categoryName}>{category.name}</Text>
                 <View style={styles.categoryActions}>
                   <Pressable onPress={() => openEditCategoryModal(category)}>
-                    <Text style={styles.editText}>Edit</Text>
+                    <Text style={styles.editText}>수정</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => {
                       Alert.alert(
-                        "Delete category?",
-                        "All items in this category will also be deleted.",
+                        "카테고리 삭제?",
+                        "이 카테고리의 모든 메뉴도 함께 삭제됩니다.",
                         [
-                          { text: "Cancel", style: "cancel" },
+                          { text: "취소", style: "cancel" },
                           {
-                            text: "Delete",
+                            text: "삭제",
                             style: "destructive",
                             onPress: () => {
                               deleteCategory(category.id);
@@ -384,13 +384,13 @@ export default function OwnerMenuScreen() {
                     <View style={styles.itemInfo}>
                       <Text style={styles.itemName}>{item.name}</Text>
                       <Text style={styles.itemPrice}>
-                        ${formatPrice(item.price)}
+                        ₩{formatPrice(item.price)}
                       </Text>
                     </View>
                     <View style={styles.itemActions}>
                       <View style={styles.availabilityRow}>
                         <Text style={styles.availabilityLabel}>
-                          {isAvailable ? "Available" : "Unavailable"}
+                          {isAvailable ? "판매중" : "품절"}
                         </Text>
                         <Switch
                           value={isAvailable}
@@ -406,10 +406,10 @@ export default function OwnerMenuScreen() {
                       </View>
                       <Pressable
                         onPress={() => {
-                          Alert.alert("Delete item?", item.name, [
-                            { text: "Cancel", style: "cancel" },
+                          Alert.alert("메뉴 삭제?", item.name, [
+                            { text: "취소", style: "cancel" },
                             {
-                              text: "Delete",
+                              text: "삭제",
                               style: "destructive",
                               onPress: () => deleteItem(item.id),
                             },
@@ -427,7 +427,7 @@ export default function OwnerMenuScreen() {
                 style={styles.addItemButton}
                 onPress={() => openCreateItemModal(category.id)}
               >
-                <Text style={styles.addItemText}>+ Add Item</Text>
+                <Text style={styles.addItemText}>+ 메뉴 추가</Text>
               </Pressable>
             </View>
           );
@@ -438,11 +438,11 @@ export default function OwnerMenuScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>
-              {editingCategoryId ? "Edit Category" : "New Category"}
+              {editingCategoryId ? "카테고리 수정" : "새 카테고리"}
             </Text>
             <TextInput
               style={styles.input}
-              placeholder="Category name"
+              placeholder="카테고리 이름"
               value={categoryName}
               onChangeText={setCategoryName}
             />
@@ -455,12 +455,12 @@ export default function OwnerMenuScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.buttonText}>
-                  {editingCategoryId ? "Save" : "Create"}
+                  {editingCategoryId ? "저장" : "추가"}
                 </Text>
               )}
             </Pressable>
             <Pressable onPress={closeCategoryModal}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>취소</Text>
             </Pressable>
           </View>
         </View>
@@ -470,7 +470,7 @@ export default function OwnerMenuScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>
-              {editingItemId ? "Edit Item" : "New Item"}
+              {editingItemId ? "메뉴 수정" : "새 메뉴"}
             </Text>
 
             <Pressable
@@ -487,20 +487,20 @@ export default function OwnerMenuScreen() {
                 />
               ) : (
                 <Text style={styles.imagePickerText}>
-                  {isUploadingItemImage ? "Uploading..." : "Tap to add item image"}
+                  {isUploadingItemImage ? "업로드 중..." : "탭하여 메뉴 이미지 추가"}
                 </Text>
               )}
             </Pressable>
 
             <TextInput
               style={styles.input}
-              placeholder="Item name"
+              placeholder="메뉴 이름"
               value={itemName}
               onChangeText={setItemName}
             />
             <TextInput
               style={styles.input}
-              placeholder="Description"
+              placeholder="설명"
               value={itemDescription}
               onChangeText={setItemDescription}
               multiline
@@ -508,7 +508,7 @@ export default function OwnerMenuScreen() {
             />
             <TextInput
               style={styles.input}
-              placeholder="Price e.g. 8.99"
+              placeholder="가격 예: 8000"
               value={itemPrice}
               onChangeText={setItemPrice}
               keyboardType="decimal-pad"
@@ -527,12 +527,12 @@ export default function OwnerMenuScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.buttonText}>
-                  {editingItemId ? "Save" : "Create"}
+                  {editingItemId ? "저장" : "추가"}
                 </Text>
               )}
             </Pressable>
             <Pressable onPress={closeItemModal}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={styles.cancelText}>취소</Text>
             </Pressable>
           </View>
         </View>
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 14,
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     alignItems: "center",
   },
@@ -648,12 +648,12 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#FF6B35",
+    borderColor: "#0077CC",
     borderStyle: "dashed",
     alignItems: "center",
   },
   addItemText: {
-    color: "#FF6B35",
+    color: "#0077CC",
     fontSize: 14,
   },
   modalOverlay: {
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     padding: 16,
     alignItems: "center",

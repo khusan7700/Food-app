@@ -1,7 +1,7 @@
 {
   "name": "api",
   "version": "0.0.1",
-  "description": "Food Delivery API (NestJS)",
+  "description": "OrderEats API (NestJS)",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -23,7 +23,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@food-delivery/types": "workspace:*",
+    "@order-eats/types": "workspace:*",
     "@nestjs/common": "11.1.27",
     "@nestjs/core": "11.1.27",
     "@nestjs/jwt": "11.0.2",

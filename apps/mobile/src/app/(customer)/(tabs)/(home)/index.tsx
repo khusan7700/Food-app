@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -9,17 +9,18 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { api } from "@/lib/axios";
-import { PaginatedResult, Restaurant } from "@food-delivery/types";
+import { PaginatedResult, Restaurant } from "@order-eats/types";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useDeliveryAvailable } from "@/hooks/use-order-socket";
+import { useRestaurantStatusSocket } from "@/hooks/use-order-socket";
 
 export default function CustomerHomeScreen() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 400);
+  const queryClient = useQueryClient();
 
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({
     queryKey: ["restaurants", debouncedSearch],
@@ -31,22 +32,26 @@ export default function CustomerHomeScreen() {
         .then((r) => r.data.data),
   });
 
-  // Initial state fetched once via REST, then kept live by the socket hook.
-  const { data: driverStatusInit } = useQuery<{ available: boolean }>({
-    queryKey: ["driver-available"],
-    queryFn: () =>
-      api.get<{ available: boolean }>("/driver/available").then((r) => r.data),
-  });
-
-  const deliveryAvailable = useDeliveryAvailable(driverStatusInit?.available);
+  // Real-time open/closed update: invalidate list + detail cache immediately.
+  useRestaurantStatusSocket(
+    useCallback(
+      (restaurantId: string) => {
+        void queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+        void queryClient.invalidateQueries({
+          queryKey: ["restaurant", restaurantId],
+        });
+      },
+      [queryClient],
+    ),
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.heading}>What are you craving?</Text>
+      <Text style={styles.heading}>오늘 뭐 드실래요?</Text>
 
       <TextInput
         style={styles.searchInput}
-        placeholder="Search restaurants or cuisine..."
+        placeholder="음식점 또는 요리 검색..."
         value={search}
         onChangeText={setSearch}
         clearButtonMode="while-editing"
@@ -54,7 +59,7 @@ export default function CustomerHomeScreen() {
 
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       ) : (
         <FlatList
@@ -63,61 +68,55 @@ export default function CustomerHomeScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={styles.emptyText}>No restaurants found</Text>
+              <Text style={styles.emptyText}>음식점을 찾을 수 없습니다</Text>
             </View>
           }
-          renderItem={({ item }) => {
-              const isEffectivelyOpen = item.isOpen && (deliveryAvailable ?? true);
-              return (
-                <Pressable
-                  style={[styles.card, !isEffectivelyOpen && styles.cardClosed]}
-                  onPress={() =>
-                    router.push(`/(customer)/(tabs)/(home)/restaurant/${item.id}`)
-                  }
-                  disabled={!isEffectivelyOpen}
-                >
-                  {item.imageUrl ? (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={[styles.cardImage, !isEffectivelyOpen && styles.cardImageClosed]}
-                    />
-                  ) : (
-                    <View style={styles.cardImagePlaceholder} />
-                  )}
-                  <View style={styles.cardBody}>
-                    <Text style={styles.cardName}>{item.name}</Text>
-                    <Text style={styles.cardCuisine}>{item.cuisineType}</Text>
-                    <View style={styles.cardMeta}>
-                      {Number(item.rating) > 0 ? (
-                        <View style={styles.ratingBadge}>
-                          <Text style={styles.ratingStar}>★</Text>
-                          <Text style={styles.ratingValue}>
-                            {Number(item.rating).toFixed(1)}
-                          </Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.noRating}>New</Text>
-                      )}
-                      <View
-                        style={[
-                          styles.openBadge,
-                          !isEffectivelyOpen && styles.closedBadge,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.openBadgeText,
-                            !isEffectivelyOpen && styles.closedBadgeText,
-                          ]}
-                        >
-                          {isEffectivelyOpen ? "Open" : "Closed"}
-                        </Text>
-                      </View>
+          renderItem={({ item }) => (
+            <Pressable
+              style={[styles.card, !item.isOpen && styles.cardClosed]}
+              onPress={() =>
+                router.push(`/(customer)/(tabs)/(home)/restaurant/${item.id}`)
+              }
+              disabled={!item.isOpen}
+            >
+              {item.imageUrl ? (
+                <Image
+                  source={{ uri: item.imageUrl }}
+                  style={[styles.cardImage, !item.isOpen && styles.cardImageClosed]}
+                />
+              ) : (
+                <View style={styles.cardImagePlaceholder} />
+              )}
+              <View style={styles.cardBody}>
+                <Text style={styles.cardName}>{item.name}</Text>
+                <Text style={styles.cardCuisine}>{item.cuisineType}</Text>
+                <View style={styles.cardMeta}>
+                  {Number(item.rating) > 0 ? (
+                    <View style={styles.ratingBadge}>
+                      <Text style={styles.ratingStar}>★</Text>
+                      <Text style={styles.ratingValue}>
+                        {Number(item.rating).toFixed(1)}
+                      </Text>
                     </View>
+                  ) : (
+                    <Text style={styles.noRating}>신규</Text>
+                  )}
+                  <View
+                    style={[styles.openBadge, !item.isOpen && styles.closedBadge]}
+                  >
+                    <Text
+                      style={[
+                        styles.openBadgeText,
+                        !item.isOpen && styles.closedBadgeText,
+                      ]}
+                    >
+                      {item.isOpen ? "영업중" : "영업종료"}
+                    </Text>
                   </View>
-                </Pressable>
-              );
-            }}
+                </View>
+              </View>
+            </Pressable>
+          )}
         />
       )}
     </SafeAreaView>
@@ -232,7 +231,7 @@ const styles = StyleSheet.create({
   },
   ratingStar: {
     fontSize: 13,
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   ratingValue: {
     fontSize: 13,

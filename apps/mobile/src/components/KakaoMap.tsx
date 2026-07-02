@@ -31,16 +31,31 @@ type KakaoSize = object;
 interface KakaoSDK { maps: KakaoMapsNS; }
 
 // ─── Native (iOS/Android): WebView + inline HTML ─────────────────────────────
+// baseUrl must be 'https://dapi.kakao.com' so the inline page shares the same
+// origin as the SDK script — without it the WebView loads from about:blank and
+// the external script load is blocked by the OS security policy.
 function buildHtml(latitude: number, longitude: number, markerTitle: string) {
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <style>html,body,#map{width:100%;height:100%;margin:0;padding:0;}</style>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body,#map{width:100%;height:100%;}
+    #err{display:none;position:absolute;inset:0;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;font-size:13px;text-align:center;padding:16px;}
+  </style>
 </head>
 <body>
   <div id="map"></div>
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false"></script>
+  <div id="err"></div>
+  <script>
+    function showErr(msg){var e=document.getElementById('err');e.style.display='flex';e.textContent=msg;}
+    window.onerror=function(m){showErr('Map error: '+m);};
+  </script>
+  <script
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false"
+    onerror="showErr('Kakao SDK load failed. Check API key & allowed domains.')"
+  ></script>
   <script>
     var map=null,marker=null;
     function makeScooterImage(){
@@ -50,28 +65,35 @@ function buildHtml(latitude: number, longitude: number, markerTitle: string) {
       ctx.font='36px serif';
       ctx.textAlign='center';
       ctx.textBaseline='middle';
-      ctx.fillText('🛵',24,24);
-      var img=new kakao.maps.MarkerImage(
+      ctx.fillText('\\uD83D\\uDEF5',24,24);
+      return new kakao.maps.MarkerImage(
         canvas.toDataURL(),
         new kakao.maps.Size(48,48),
         {offset:new kakao.maps.Point(24,24)}
       );
-      return img;
     }
     function init(){
-      var c=new kakao.maps.LatLng(${latitude},${longitude});
-      map=new kakao.maps.Map(document.getElementById('map'),{center:c,level:4});
-      marker=new kakao.maps.Marker({position:c,map:map,title:${JSON.stringify(markerTitle)},image:makeScooterImage()});
+      try{
+        var c=new kakao.maps.LatLng(${latitude},${longitude});
+        map=new kakao.maps.Map(document.getElementById('map'),{center:c,level:4});
+        marker=new kakao.maps.Marker({position:c,map:map,title:${JSON.stringify(markerTitle)},image:makeScooterImage()});
+      }catch(e){showErr('Map init failed: '+e.message);}
     }
     function updateMarker(lat,lng){
       if(!map||!marker)return;
       var p=new kakao.maps.LatLng(lat,lng);
       marker.setPosition(p);map.panTo(p);
     }
-    function onMsg(e){try{var d=JSON.parse(e.data);if(d.type==='updateMarker')updateMarker(d.latitude,d.longitude);}catch(x){}}
+    function onMsg(e){
+      try{var d=JSON.parse(e.data);if(d.type==='updateMarker')updateMarker(d.latitude,d.longitude);}catch(x){}
+    }
     document.addEventListener('message',onMsg);
     window.addEventListener('message',onMsg);
-    kakao.maps.load(init);
+    if(typeof kakao!=='undefined'&&kakao.maps){
+      kakao.maps.load(init);
+    } else {
+      showErr('Kakao SDK not loaded. Key: ${KAKAO_JS_KEY ? "set" : "MISSING"}');
+    }
   </script>
 </body>
 </html>`;
@@ -193,7 +215,13 @@ const KakaoMap = forwardRef<KakaoMapHandle, KakaoMapProps>(function KakaoMap(
       ref={webviewRef}
       style={styles.map}
       originWhitelist={["*"]}
-      source={{ html: buildHtml(latitude, longitude, markerTitle) }}
+      javaScriptEnabled
+      domStorageEnabled
+      allowsInlineMediaPlayback
+      source={{
+        html: buildHtml(latitude, longitude, markerTitle),
+        baseUrl: "https://dapi.kakao.com",
+      }}
     />
   );
 });

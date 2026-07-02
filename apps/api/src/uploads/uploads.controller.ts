@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtPayload } from '@food-delivery/types';
+import { JwtPayload } from '@order-eats/types';
 import { Request as ExpressRequest } from 'express';
 import { diskStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

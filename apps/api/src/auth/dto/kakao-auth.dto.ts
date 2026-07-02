@@ -1,4 +1,4 @@
-import { UserRole } from '@food-delivery/types';
+import { UserRole } from '@order-eats/types';
 import { IsEnum, IsString } from 'class-validator';
 
 export class KakaoAuthDto {

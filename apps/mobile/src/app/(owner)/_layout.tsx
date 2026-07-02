@@ -18,7 +18,7 @@ export default function OwnerLayout() {
       <Tabs.Screen
         name="(index)"
         options={{
-          title: "Orders",
+          title: "주문",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "shippingbox.fill", android: "local_shipping", web: "inventory" }}
@@ -31,7 +31,7 @@ export default function OwnerLayout() {
       <Tabs.Screen
         name="menu"
         options={{
-          title: "Menu",
+          title: "메뉴",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "menucard.fill", android: "restaurant_menu", web: "restaurant_menu" }}
@@ -44,7 +44,7 @@ export default function OwnerLayout() {
       <Tabs.Screen
         name="analytics"
         options={{
-          title: "Analytics",
+          title: "분석",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "chart.bar.xaxis", android: "bar_chart", web: "bar_chart" }}
@@ -57,7 +57,7 @@ export default function OwnerLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: "프로필",
           tabBarIcon: ({ color }) => (
             <SymbolView
               name={{ ios: "person.crop.circle.fill", android: "account_circle", web: "account_circle" }}

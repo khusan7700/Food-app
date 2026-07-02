@@ -1,4 +1,4 @@
-import { OrderStatus } from '@food-delivery/types';
+import { OrderStatus } from '@order-eats/types';
 import { IsIn } from 'class-validator';
 
 export class UpdateOrderStatusDto {

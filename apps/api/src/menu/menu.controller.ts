@@ -18,7 +18,7 @@ import { UpdateMenuItemDto } from './dto/update-menu-item.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { JwtPayload, UserRole } from '@food-delivery/types';
+import { JwtPayload, UserRole } from '@order-eats/types';
 
 type AuthRequest = ExpressRequest & { user: JwtPayload };
 

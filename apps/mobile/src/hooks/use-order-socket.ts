@@ -1,10 +1,17 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from "react";
+import { Platform } from "react-native";
 import { io, Socket } from "socket.io-client";
-import { Order } from "@food-delivery/types";
+import { Order } from "@order-eats/types";
 import { getToken } from "@/lib/auth";
 
-const SERVER_URL =
-  process.env.EXPO_PUBLIC_SERVER_URL ?? "http://localhost:3000";
+function getServerUrl(): string {
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:3000`;
+  }
+  return process.env.EXPO_PUBLIC_SERVER_URL ?? "http://localhost:3000";
+}
+
+const SERVER_URL = getServerUrl();
 
 interface RestaurantSocketState {
   lastEvent: number;
@@ -156,6 +163,39 @@ export function useDeliveryAvailable(initialAvailable: boolean | undefined) {
   }, []);
 
   return available;
+}
+
+// Fires a callback whenever a restaurant's open/closed status changes —
+// lets the customer home screen invalidate its restaurants query in real time.
+export function useRestaurantStatusSocket(
+  onChanged: (restaurantId: string, isOpen: boolean) => void,
+) {
+  const onChangedRef = useRef(onChanged);
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  });
+
+  useEffect(() => {
+    let socket: Socket | undefined;
+    let cancelled = false;
+
+    void (async () => {
+      const token = await getToken();
+      if (!token || cancelled) return;
+      socket = io(`${SERVER_URL}/orders`, { auth: { token } });
+      socket.on(
+        'restaurant:status:changed',
+        (data: { restaurantId: string; isOpen: boolean }) => {
+          onChangedRef.current(data.restaurantId, data.isOpen);
+        },
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+      socket?.disconnect();
+    };
+  }, []);
 }
 
 // watch handler.

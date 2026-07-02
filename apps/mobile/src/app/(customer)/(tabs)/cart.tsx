@@ -15,10 +15,10 @@ import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { api } from "@/lib/axios";
 import { useCartStore } from "@/stores/cart.store";
-import { Order } from "@food-delivery/types";
+import { Order } from "@order-eats/types";
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 export default function CartScreen() {
@@ -54,14 +54,14 @@ export default function CartScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not place order",
+        "오류",
+        e.response?.data?.message ?? "주문할 수 없습니다",
       );
     },
   });
 
   function handlePlaceOrder() {
-    if (items.length === 0) return Alert.alert("Savat bo'sh");
+    if (items.length === 0) return Alert.alert("장바구니가 비어 있습니다");
     if (!deliveryAddress.trim()) {
       setAddressError(true);
       return;
@@ -74,12 +74,12 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>Your cart is empty</Text>
+          <Text style={styles.emptyText}>장바구니가 비어 있습니다</Text>
           <Pressable
             style={styles.browseButton}
             onPress={() => router.push("/(customer)/(tabs)/(home)")}
           >
-            <Text style={styles.browseButtonText}>Browse Restaurants</Text>
+            <Text style={styles.browseButtonText}>음식점 둘러보기</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -88,7 +88,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.heading}>Your Cart</Text>
+      <Text style={styles.heading}>장바구니</Text>
       <Text style={styles.restaurantName}>{restaurantName}</Text>
 
       <FlatList
@@ -104,7 +104,7 @@ export default function CartScreen() {
             <View style={styles.itemInfo}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemPrice}>
-                ${formatPrice(item.price * item.quantity)}
+                ₩{formatPrice(item.price * item.quantity)}
               </Text>
             </View>
             <View style={styles.qtyControls}>
@@ -126,13 +126,13 @@ export default function CartScreen() {
         )}
         ListFooterComponent={
           <View style={styles.footer}>
-            <Text style={styles.sectionTitle}>Delivery address</Text>
+            <Text style={styles.sectionTitle}>배달 주소</Text>
             <TextInput
               style={[
                 styles.addressInput,
                 addressError && styles.addressInputError,
               ]}
-              placeholder="Enter your delivery address"
+              placeholder="배달 주소를 입력하세요"
               placeholderTextColor={addressError ? "#EF4444" : "#aaa"}
               value={deliveryAddress}
               onChangeText={(v) => {
@@ -142,12 +142,12 @@ export default function CartScreen() {
               multiline
             />
             {addressError && (
-              <Text style={styles.addressErrorText}>insert yout address</Text>
+              <Text style={styles.addressErrorText}>주소를 입력해 주세요</Text>
             )}
 
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total ({itemCount} items)</Text>
-              <Text style={styles.totalAmount}>${formatPrice(cartTotal)}</Text>
+              <Text style={styles.totalLabel}>합계 ({itemCount}개)</Text>
+              <Text style={styles.totalAmount}>₩{formatPrice(cartTotal)}</Text>
             </View>
 
             <Pressable
@@ -161,20 +161,20 @@ export default function CartScreen() {
                 <ActivityIndicator color="#191919" />
               ) : (
                 <Text style={styles.kakaoPayButtonText}>
-                  Pay with Kakao Pay
+                  카카오페이로 결제
                 </Text>
               )}
             </Pressable>
 
             <Pressable
               onPress={() => {
-                Alert.alert("Clear cart?", "Remove all items?", [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Clear", style: "destructive", onPress: clearCart },
+                Alert.alert("장바구니를 비울까요?", "모든 항목을 삭제합니다.", [
+                  { text: "취소", style: "cancel" },
+                  { text: "비우기", style: "destructive", onPress: clearCart },
                 ]);
               }}
             >
-              <Text style={styles.clearText}>Clear cart</Text>
+              <Text style={styles.clearText}>장바구니 비우기</Text>
             </Pressable>
           </View>
         }
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   browseButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     fontSize: 14,
-    color: "#FF6B35",
+    color: "#0077CC",
     fontWeight: "700",
   },
   qtyControls: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   kakaoPayButton: {
     backgroundColor: "#FEE500",

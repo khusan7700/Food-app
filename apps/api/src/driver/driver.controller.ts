@@ -12,7 +12,7 @@ import { DriverService } from './driver.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { JwtPayload, UserRole } from '@food-delivery/types';
+import { JwtPayload, UserRole } from '@order-eats/types';
 
 type AuthRequest = ExpressRequest & { user: JwtPayload };
 
@@ -47,11 +47,25 @@ export class DriverController {
     return this.driverService.findMyOrders(req.user.sub);
   }
 
+  @Get('waiting-orders')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DRIVER)
+  getWaitingOrders() {
+    return this.driverService.getWaitingOrders();
+  }
+
   @Post('orders/:id/accept')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DRIVER)
   acceptOrder(@Param('id') id: string, @Request() req: AuthRequest) {
     return this.driverService.acceptOrder(id, req.user.sub);
+  }
+
+  @Post('orders/:id/claim')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DRIVER)
+  claimOrder(@Param('id') id: string, @Request() req: AuthRequest) {
+    return this.driverService.claimOrder(id, req.user.sub);
   }
 
   @Post('orders/:id/decline')

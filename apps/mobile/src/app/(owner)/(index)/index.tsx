@@ -17,8 +17,8 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
-import { Restaurant, Order } from "@food-delivery/types";
-import type { Payment } from "@food-delivery/types";
+import { Restaurant, Order } from "@order-eats/types";
+import type { Payment } from "@order-eats/types";
 import { useRestaurantSocket } from "@/hooks/use-order-socket";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -32,8 +32,21 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "#EF4444",
 };
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "결제 대기",
+  CONFIRMED: "주문 확인됨",
+  PREPARING: "준비 중",
+  READY: "준비 완료",
+  PENDING_DRIVER: "드라이버 배정 중",
+  PICKED_UP: "픽업 완료",
+  DELIVERED: "배달 완료",
+  CANCELLED: "취소됨",
+  REFUND_PENDING: "환불 대기",
+  REFUNDED: "환불 완료",
+};
+
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 const TAB_BAR_OFFSET = 88;
@@ -88,8 +101,8 @@ export default function OwnerHomeScreen() {
       queryClient.invalidateQueries({ queryKey: ["restaurant-orders"] }),
     onError: (e: { response?: { data?: { message?: string } } }) =>
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not update status",
+        "오류",
+        e.response?.data?.message ?? "상태를 업데이트할 수 없습니다",
       ),
   });
 
@@ -103,7 +116,7 @@ export default function OwnerHomeScreen() {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color="#0077CC" />
       </View>
     );
   }
@@ -122,7 +135,7 @@ export default function OwnerHomeScreen() {
       if (!isPaid) {
         return (
           <View style={styles.awaitingPayment}>
-            <Text style={styles.awaitingPaymentText}>⏳ Awaiting payment...</Text>
+            <Text style={styles.awaitingPaymentText}>⏳ 결제 대기 중...</Text>
           </View>
         );
       }
@@ -131,7 +144,7 @@ export default function OwnerHomeScreen() {
           style={[styles.actionButton, { backgroundColor: "#3B82F6" }]}
           onPress={() => updateStatus({ id: order.id, status: "CONFIRMED" })}
         >
-          <Text style={styles.actionButtonText}>Confirm Order</Text>
+          <Text style={styles.actionButtonText}>주문 확인</Text>
         </Pressable>
       );
     }
@@ -141,7 +154,7 @@ export default function OwnerHomeScreen() {
           style={[styles.actionButton, { backgroundColor: "#F59E0B" }]}
           onPress={() => updateStatus({ id: order.id, status: "PREPARING" })}
         >
-          <Text style={styles.actionButtonText}>Start Preparing</Text>
+          <Text style={styles.actionButtonText}>준비 시작</Text>
         </Pressable>
       );
     }
@@ -151,7 +164,7 @@ export default function OwnerHomeScreen() {
           style={[styles.actionButton, { backgroundColor: "#10B981" }]}
           onPress={() => updateStatus({ id: order.id, status: "READY" })}
         >
-          <Text style={styles.actionButtonText}>Mark Ready</Text>
+          <Text style={styles.actionButtonText}>준비 완료</Text>
         </Pressable>
       );
     }
@@ -176,9 +189,16 @@ export default function OwnerHomeScreen() {
             ]}
           >
             {failed
-              ? "No driver available. Retrying..."
-              : "Searching driver......"}
+              ? "가능한 드라이버 없음. 재시도 중..."
+              : "드라이버 검색 중......"}
           </Text>
+        </View>
+      );
+    }
+    if (order.status === "PICKED_UP") {
+      return (
+        <View style={styles.pickedUpCard}>
+          <Text style={styles.pickedUpText}>🛵 픽업 완료 — 배달 중</Text>
         </View>
       );
     }
@@ -210,7 +230,7 @@ export default function OwnerHomeScreen() {
             onPress={() => toggleOpen()}
           >
             <Text style={styles.toggleText}>
-              {restaurant?.isOpen ? "Open" : "Closed"}
+              {restaurant?.isOpen ? "영업중" : "영업종료"}
             </Text>
           </Pressable>
         </View>
@@ -219,7 +239,7 @@ export default function OwnerHomeScreen() {
           style={styles.editButton}
           onPress={() => router.push("/(owner)/(index)/edit-restaurant")}
         >
-          <Text style={styles.editButtonText}>Edit Restaurant</Text>
+          <Text style={styles.editButtonText}>음식점 수정</Text>
         </Pressable>
 
         <FlatList
@@ -238,20 +258,20 @@ export default function OwnerHomeScreen() {
           }
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={styles.emptyText}>No active orders</Text>
+              <Text style={styles.emptyText}>진행 중인 주문 없음</Text>
             </View>
           }
           ListHeaderComponent={
             activeOrders.length > 0 ? (
               <Text style={styles.sectionTitle}>
-                Active Orders ({activeOrders.length})
+                진행 중 ({activeOrders.length})
               </Text>
             ) : null
           }
           ListFooterComponent={
             pastOrders.length > 0 ? (
               <View>
-                <Text style={styles.sectionTitle}>Past Orders</Text>
+                <Text style={styles.sectionTitle}>지난 주문</Text>
                 {pastOrders.slice(0, 5).map((order) => (
                   <View key={order.id} style={styles.orderCard}>
                     <View style={styles.orderHeader}>
@@ -272,11 +292,11 @@ export default function OwnerHomeScreen() {
                             { color: STATUS_COLORS[order.status] },
                           ]}
                         >
-                          {order.status}
+                          {STATUS_LABELS[order.status] ?? order.status}
                         </Text>
                       </View>
                     </View>
-                    <Text style={styles.orderTotal}>${formatPrice(order.totalPrice)}</Text>
+                    <Text style={styles.orderTotal}>₩{formatPrice(order.totalPrice)}</Text>
                     <Text style={styles.orderAddress} numberOfLines={1}>
                       {order.deliveryAddress}
                     </Text>
@@ -303,11 +323,11 @@ export default function OwnerHomeScreen() {
                       { color: STATUS_COLORS[order.status] },
                     ]}
                   >
-                    {order.status}
+                    {STATUS_LABELS[order.status] ?? order.status}
                   </Text>
                 </View>
               </View>
-              <Text style={styles.orderTotal}>${formatPrice(order.totalPrice)}</Text>
+              <Text style={styles.orderTotal}>₩{formatPrice(order.totalPrice)}</Text>
               <Text style={styles.orderAddress} numberOfLines={1}>
                 {order.deliveryAddress}
               </Text>
@@ -439,7 +459,7 @@ const styles = StyleSheet.create({
   orderTotal: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   orderAddress: {
     fontSize: 13,
@@ -467,6 +487,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#92400E",
     fontWeight: "500",
+  },
+  pickedUpCard: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#D1FAE5",
+    alignItems: "center",
+  },
+  pickedUpText: {
+    fontSize: 13,
+    color: "#065F46",
+    fontWeight: "600",
   },
   searchingCard: {
     marginTop: 8,

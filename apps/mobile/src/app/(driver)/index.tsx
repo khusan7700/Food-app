@@ -12,9 +12,10 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Location from "expo-location";
+import { router } from "expo-router";
 import { api } from "@/lib/axios";
 import { useAuthStore } from "@/stores/auth.store";
-import { Order } from "@food-delivery/types";
+import { Order } from "@order-eats/types";
 import {
   useDriverAssignedSocket,
   useDriverLocationBroadcaster,
@@ -41,8 +42,8 @@ export default function DriverHomeScreen() {
       queryClient.invalidateQueries({ queryKey: ["driver-status"] }),
     onError: (e: any) =>
       Alert.alert(
-        "Error",
-        e?.response?.data?.message ?? "Could not update online status",
+        "오류",
+        e?.response?.data?.message ?? "온라인 상태를 변경할 수 없습니다",
       ),
   });
 
@@ -115,23 +116,24 @@ export default function DriverHomeScreen() {
     onSuccess: (_data, orderId) => setDismissedOrderId(orderId),
     onError: (e: any) =>
       Alert.alert(
-        "Error",
-        e?.response?.data?.message ?? "Something went wrong",
+        "오류",
+        e?.response?.data?.message ?? "문제가 발생했습니다",
       ),
   });
 
-  // driver accepts → POST /driver/orders/:id/accept
+  // driver accepts → POST /driver/orders/:id/accept → map page'ga o'tadi
   const { mutate: acceptOrder } = useMutation({
     mutationFn: (orderId: string) =>
       api.post(`/driver/orders/${orderId}/accept`),
     onSuccess: (_data, orderId) => {
       setDismissedOrderId(orderId);
       queryClient.invalidateQueries({ queryKey: ["driver-orders"] });
+      router.replace("/(driver)/active");
     },
     onError: (e: any) =>
       Alert.alert(
-        "Error",
-        e?.response?.data?.message ?? "Something went wrong",
+        "오류",
+        e?.response?.data?.message ?? "문제가 발생했습니다",
       ),
   });
 
@@ -139,7 +141,7 @@ export default function DriverHomeScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -148,13 +150,13 @@ export default function DriverHomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
-        <Text style={styles.title}>Driver Dashboard</Text>
+        <Text style={styles.title}>드라이버 대시보드</Text>
 
         {/* online/offline toggle card */}
         <View style={styles.statusCard}>
           <View style={styles.statusRow}>
             <Text style={styles.statusLabel}>
-              {isOnline ? "🟢 You are Online" : "🔴 You are Offline"}
+              {isOnline ? "🟢 온라인 상태" : "🔴 오프라인 상태"}
             </Text>
             <Switch
               value={isOnline}
@@ -168,8 +170,8 @@ export default function DriverHomeScreen() {
           </View>
           <Text style={styles.statusSubtext}>
             {isOnline
-              ? "You will receive delivery requests"
-              : "Go online to start receiving orders"}
+              ? "배달 요청을 받을 수 있습니다"
+              : "온라인으로 전환하여 주문을 받으세요"}
           </Text>
         </View>
       </View>
@@ -178,22 +180,22 @@ export default function DriverHomeScreen() {
       <Modal visible={!!incomingOrder} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>🛵 New Delivery Request</Text>
+            <Text style={styles.modalTitle}>🛵 새 배달 요청</Text>
 
             <View style={styles.orderDetails}>
-              <Text style={styles.orderLabel}>Order ID</Text>
+              <Text style={styles.orderLabel}>주문 번호</Text>
               <Text style={styles.orderValue}>
                 #{incomingOrder?.id.slice(0, 8).toUpperCase()}
               </Text>
 
-              <Text style={styles.orderLabel}>Deliver to</Text>
+              <Text style={styles.orderLabel}>배달 주소</Text>
               <Text style={styles.orderValue}>
                 {incomingOrder?.deliveryAddress}
               </Text>
 
-              <Text style={styles.orderLabel}>Total</Text>
+              <Text style={styles.orderLabel}>합계</Text>
               <Text style={styles.orderValue}>
-                ${((incomingOrder?.totalPrice ?? 0) / 100).toFixed(2)}
+                ₩{Math.round(incomingOrder?.totalPrice ?? 0).toLocaleString("ko-KR")}
               </Text>
             </View>
 
@@ -203,7 +205,7 @@ export default function DriverHomeScreen() {
                 if (incomingOrder) acceptOrder(incomingOrder.id);
               }}
             >
-              <Text style={styles.acceptButtonText}>Accept</Text>
+              <Text style={styles.acceptButtonText}>수락</Text>
             </Pressable>
 
             <Pressable
@@ -212,7 +214,7 @@ export default function DriverHomeScreen() {
                 if (incomingOrder) declineOrder(incomingOrder.id);
               }}
             >
-              <Text style={styles.declineButtonText}>Decline</Text>
+              <Text style={styles.declineButtonText}>거절</Text>
             </Pressable>
           </View>
         </View>

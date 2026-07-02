@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { OrdersGateway } from '../gateway/orders.gateway';
 import { buildPaginatedResult } from '../common/pagination';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { FindRestaurantsQueryDto } from './dto/find-restaurants-query.dto';
@@ -20,7 +21,10 @@ interface KakaoAddressSearchResponse {
 export class RestaurantsService {
   private readonly logger = new Logger(RestaurantsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ordersGateway: OrdersGateway,
+  ) {}
 
   // Address -> {lat, lng} via Kakao's Local API, used by the owner app's
   // create/edit-restaurant screens since there's no map picker — the REST
@@ -117,6 +121,15 @@ export class RestaurantsService {
       throw new ForbiddenException('You do not own this restaurant');
     }
 
-    return this.prisma.restaurant.update({ where: { id }, data: dto });
+    const updated = await this.prisma.restaurant.update({
+      where: { id },
+      data: dto,
+    });
+
+    if (dto.isOpen !== undefined) {
+      this.ordersGateway.emitRestaurantStatusChanged(id, updated.isOpen);
+    }
+
+    return updated;
   }
 }

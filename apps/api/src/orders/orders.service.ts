@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus } from '@food-delivery/types';
+import { OrderStatus } from '@order-eats/types';
 import { OrdersGateway } from '../gateway/orders.gateway';
 import { PaymentsService } from '../payments/payments.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -27,6 +27,8 @@ export class OrdersService {
       where: { id: dto.restaurantId },
     });
     if (!restaurant) throw new NotFoundException('Restaurant not found');
+    if (!restaurant.isOpen)
+      throw new BadRequestException('Restaurant is currently closed');
 
     const menuItemIds = dto.items.map((i) => i.menuItemId);
     const menuItems = await this.prisma.menuItem.findMany({

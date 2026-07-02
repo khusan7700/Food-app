@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   star: {
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   input: {
     borderWidth: 1,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   submitButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",

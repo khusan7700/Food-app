@@ -14,7 +14,7 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 import { api } from "@/lib/axios";
 import { pickAndUploadImage } from "@/lib/upload";
-import { Restaurant } from "@food-delivery/types";
+import { Restaurant } from "@order-eats/types";
 
 export default function CreateRestaurantScreen() {
   const queryClient = useQueryClient();
@@ -48,8 +48,8 @@ export default function CreateRestaurantScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Something went wrong",
+        "오류",
+        e.response?.data?.message ?? "문제가 발생했습니다",
       );
     },
   });
@@ -60,8 +60,8 @@ export default function CreateRestaurantScreen() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== Location.PermissionStatus.GRANTED) {
         Alert.alert(
-          "Permission denied",
-          "Location permission is required to set your restaurant's coordinates.",
+          "권한 거부됨",
+          "음식점 좌표를 설정하려면 위치 권한이 필요합니다.",
         );
         return;
       }
@@ -71,7 +71,7 @@ export default function CreateRestaurantScreen() {
       setLat(position.coords.latitude);
       setLng(position.coords.longitude);
     } catch {
-      Alert.alert("Error", "Could not get your current location.");
+      Alert.alert("오류", "현재 위치를 가져올 수 없습니다.");
     } finally {
       setIsLocating(false);
     }
@@ -90,8 +90,8 @@ export default function CreateRestaurantScreen() {
     },
     onError: (e: { response?: { data?: { message?: string } } }) => {
       Alert.alert(
-        "Error",
-        e.response?.data?.message ?? "Could not find that address",
+        "오류",
+        e.response?.data?.message ?? "해당 주소를 찾을 수 없습니다",
       );
     },
   });
@@ -104,7 +104,7 @@ export default function CreateRestaurantScreen() {
       );
       if (url) setImageUrl(url);
     } catch {
-      Alert.alert("Upload failed", "Could not upload image. Please try again.");
+      Alert.alert("업로드 실패", "이미지를 업로드할 수 없습니다. 다시 시도해 주세요.");
     } finally {
       setImagePreview(null);
       setIsUploading(false);
@@ -115,12 +115,12 @@ export default function CreateRestaurantScreen() {
 
   function handleSubmit() {
     if (!name || !address || !cuisineType) {
-      return Alert.alert("Please fill in all required fields");
+      return Alert.alert("필수 항목을 모두 입력해 주세요");
     }
     if (lat === null || lng === null) {
       return Alert.alert(
-        "Location required",
-        "Set your restaurant's location using your current location or by searching the address — drivers can't be matched without it.",
+        "위치 필요",
+        "현재 위치 또는 주소 검색으로 음식점 위치를 설정하세요 — 위치 없이는 드라이버를 배정할 수 없습니다.",
       );
     }
     createRestaurant();
@@ -128,7 +128,7 @@ export default function CreateRestaurantScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create your restaurant</Text>
+      <Text style={styles.title}>음식점 등록</Text>
 
       <Pressable
         style={styles.imagePicker}
@@ -141,20 +141,20 @@ export default function CreateRestaurantScreen() {
           <Image source={{ uri: displayedImage }} style={styles.image} />
         ) : (
           <Text style={styles.imagePickerText}>
-            {isUploading ? "Uploading..." : "Tap to upload restaurant image"}
+            {isUploading ? "업로드 중..." : "탭하여 음식점 이미지 업로드"}
           </Text>
         )}
       </Pressable>
 
       <TextInput
         style={styles.input}
-        placeholder="Restaurant name *"
+        placeholder="음식점 이름 *"
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
-        placeholder="Description"
+        placeholder="설명"
         value={description}
         onChangeText={setDescription}
         multiline
@@ -162,20 +162,20 @@ export default function CreateRestaurantScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Address *"
+        placeholder="주소 *"
         value={address}
         onChangeText={setAddress}
       />
       <TextInput
         style={styles.input}
-        placeholder="Cuisine type * (e.g. Italian, Chinese)"
+        placeholder="요리 종류 * (예: 한식, 중식)"
         value={cuisineType}
         onChangeText={setCuisineType}
       />
 
-      <Text style={styles.sectionLabel}>Location *</Text>
+      <Text style={styles.sectionLabel}>위치 *</Text>
       <Text style={styles.sectionHint}>
-        Drivers are matched by distance — this needs to be accurate.
+        드라이버는 거리 기준으로 배정됩니다 — 정확하게 입력해 주세요.
       </Text>
 
       <Pressable
@@ -186,10 +186,10 @@ export default function CreateRestaurantScreen() {
         disabled={isLocating}
       >
         {isLocating ? (
-          <ActivityIndicator color="#FF6B35" />
+          <ActivityIndicator color="#0077CC" />
         ) : (
           <Text style={styles.secondaryButtonText}>
-            📍 Use my current location
+            📍 현재 위치 사용
           </Text>
         )}
       </Pressable>
@@ -198,17 +198,17 @@ export default function CreateRestaurantScreen() {
         style={styles.secondaryButton}
         onPress={() => {
           if (!address) {
-            return Alert.alert("Enter an address first");
+            return Alert.alert("먼저 주소를 입력해 주세요");
           }
           geocodeAddress();
         }}
         disabled={isGeocoding}
       >
         {isGeocoding ? (
-          <ActivityIndicator color="#FF6B35" />
+          <ActivityIndicator color="#0077CC" />
         ) : (
           <Text style={styles.secondaryButtonText}>
-            🔍 Find coordinates from address
+            🔍 주소로 좌표 찾기
           </Text>
         )}
       </Pressable>
@@ -218,7 +218,7 @@ export default function CreateRestaurantScreen() {
           ✅ Location set: {lat.toFixed(5)}, {lng.toFixed(5)}
         </Text>
       ) : (
-        <Text style={styles.coordsTextMissing}>No location set yet</Text>
+        <Text style={styles.coordsTextMissing}>아직 위치가 설정되지 않았습니다</Text>
       )}
 
       <Pressable
@@ -231,7 +231,7 @@ export default function CreateRestaurantScreen() {
         {isPending ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Create Restaurant</Text>
+          <Text style={styles.buttonText}>음식점 등록</Text>
         )}
       </Pressable>
     </ScrollView>
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
@@ -274,13 +274,13 @@ const styles = StyleSheet.create({
   sectionHint: { fontSize: 12, color: "#999", marginBottom: 12 },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "#FF6B35",
+    borderColor: "#0077CC",
     borderRadius: 8,
     padding: 14,
     alignItems: "center",
     marginBottom: 10,
   },
-  secondaryButtonText: { color: "#FF6B35", fontSize: 15, fontWeight: "600" },
+  secondaryButtonText: { color: "#0077CC", fontSize: 15, fontWeight: "600" },
   coordsText: {
     color: "#22C55E",
     fontSize: 13,

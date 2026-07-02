@@ -1,6 +1,6 @@
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PaginatedResult } from '@food-delivery/types';
+import { PaginatedResult } from '@order-eats/types';
 
 export class PaginationQueryDto {
   @IsOptional()

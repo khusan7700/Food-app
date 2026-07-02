@@ -11,7 +11,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
-import { Order, PaymentStatus } from "@food-delivery/types";
+import { Order, PaymentStatus } from "@order-eats/types";
 import { useCustomerOrderSocket } from "@/hooks/use-order-socket";
 import { RatingModal } from "@/components/rating-modal";
 
@@ -21,20 +21,33 @@ type OrderDetail = Order & {
   payment: { status: PaymentStatus } | null;
 };
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 const STATUS_STEPS = [
-  { key: "CONFIRMED", label: "Order Confirmed", icon: "✅" },
-  { key: "PREPARING", label: "Being Prepared", icon: "👨‍🍳" },
-  { key: "READY", label: "Ready for Pickup", icon: "📦" },
-  { key: "PENDING_DRIVER", label: "Finding a Driver", icon: "🔎" },
-  { key: "PICKED_UP", label: "On the Way", icon: "🛵" },
-  { key: "DELIVERED", label: "Delivered", icon: "🎉" },
+  { key: "CONFIRMED", label: "주문 확인됨", icon: "✅" },
+  { key: "PREPARING", label: "준비 중", icon: "👨‍🍳" },
+  { key: "READY", label: "픽업 준비완료", icon: "📦" },
+  { key: "PENDING_DRIVER", label: "배달기사 배정 중", icon: "🔎" },
+  { key: "PICKED_UP", label: "배달 중", icon: "🛵" },
+  { key: "DELIVERED", label: "배달 완료", icon: "🎉" },
 ];
 
 const STATUS_ORDER = STATUS_STEPS.map((s) => s.key);
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "결제 대기",
+  CONFIRMED: "주문 확인됨",
+  PREPARING: "준비 중",
+  READY: "준비 완료",
+  PENDING_DRIVER: "드라이버 배정 중",
+  PICKED_UP: "픽업 완료",
+  DELIVERED: "배달 완료",
+  CANCELLED: "취소됨",
+  REFUND_PENDING: "환불 대기",
+  REFUNDED: "환불 완료",
+};
 
 export default function OrderConfirmationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -102,7 +115,7 @@ export default function OrderConfirmationScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -114,25 +127,25 @@ export default function OrderConfirmationScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.emoji}>🎉</Text>
-        <Text style={styles.title}>Order Placed!</Text>
+        <Text style={styles.title}>주문 완료!</Text>
         <Text style={styles.subtitle}>
-          {order?.restaurant?.name} is getting started on your order
+          {order?.restaurant?.name}에서 주문을 준비하고 있습니다
         </Text>
 
         <View style={styles.card}>
-          <Text style={styles.label}>Order ID</Text>
+          <Text style={styles.label}>주문 번호</Text>
           <Text style={styles.value}>{order?.id.slice(0, 8).toUpperCase()}</Text>
 
-          <Text style={styles.label}>Total</Text>
+          <Text style={styles.label}>합계</Text>
           <Text style={styles.value}>
-            ${order ? formatPrice(order.totalPrice) : "0.00"}
+            ₩{order ? formatPrice(order.totalPrice) : "0"}
           </Text>
 
-          <Text style={styles.label}>Delivery to</Text>
+          <Text style={styles.label}>배달 주소</Text>
           <Text style={styles.value}>{order?.deliveryAddress}</Text>
 
-          <Text style={styles.label}>Status</Text>
-          <Text style={styles.statusValue}>{order?.status}</Text>
+          <Text style={styles.label}>상태</Text>
+          <Text style={styles.statusValue}>{order ? (STATUS_LABELS[order.status] ?? order.status) : ""}</Text>
         </View>
 
         {order?.status === "PENDING" && order.payment?.status !== "APPROVED" ? (
@@ -140,25 +153,25 @@ export default function OrderConfirmationScreen() {
             <Text style={styles.paymentText}>
               {order.payment?.status === "FAILED" ||
               order.payment?.status === "CANCELLED"
-                ? "Your Kakao Pay payment didn't go through."
-                : "Waiting for Kakao Pay payment."}
+                ? "카카오페이 결제가 완료되지 않았습니다."
+                : "카카오페이 결제 대기 중입니다."}
             </Text>
             <Pressable
               style={styles.payButton}
               onPress={() => router.push(`/(customer)/payment/${order.id}`)}
             >
-              <Text style={styles.payButtonText}>Pay with Kakao Pay</Text>
+              <Text style={styles.payButtonText}>카카오페이로 결제</Text>
             </Pressable>
           </View>
         ) : null}
 
         {order?.status === "CANCELLED" ? (
           <View style={styles.cancelledBox}>
-            <Text style={styles.cancelledText}>❌ Order Cancelled</Text>
+            <Text style={styles.cancelledText}>❌ 주문 취소됨</Text>
           </View>
         ) : (
           <View style={styles.tracker}>
-            <Text style={styles.trackerTitle}>Order Progress</Text>
+            <Text style={styles.trackerTitle}>주문 진행 상황</Text>
             {STATUS_STEPS.map((step, index) => {
               const isCompleted = index <= currentIndex;
               const isActive = index === currentIndex;
@@ -203,18 +216,18 @@ export default function OrderConfirmationScreen() {
         {order?.status === "DELIVERED" && (
           <View style={styles.deliveredBanner}>
             <Text style={styles.deliveredEmoji}>🎉</Text>
-            <Text style={styles.deliveredTitle}>Delivered!</Text>
+            <Text style={styles.deliveredTitle}>배달 완료!</Text>
             <Text style={styles.deliveredSub}>
-              Your order has arrived. Enjoy your meal!
+              주문하신 음식이 도착했습니다. 맛있게 드세요!
             </Text>
             {alreadyReviewed ? (
-              <Text style={styles.reviewedText}>✅ Review submitted</Text>
+              <Text style={styles.reviewedText}>✅ 리뷰 작성 완료</Text>
             ) : (
               <Pressable
                 style={styles.rateButton}
                 onPress={() => setShowRating(true)}
               >
-                <Text style={styles.rateButtonText}>⭐ Rate your order</Text>
+                <Text style={styles.rateButtonText}>⭐ 리뷰 작성하기</Text>
               </Pressable>
             )}
           </View>
@@ -224,7 +237,7 @@ export default function OrderConfirmationScreen() {
           style={styles.homeButton}
           onPress={() => router.replace("/(customer)/(tabs)/(home)")}
         >
-          <Text style={styles.homeButtonText}>Back to Home</Text>
+          <Text style={styles.homeButtonText}>홈으로 돌아가기</Text>
         </Pressable>
       </ScrollView>
 
@@ -289,7 +302,7 @@ const styles = StyleSheet.create({
   statusValue: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   homeButton: {
     borderRadius: 8,
@@ -328,7 +341,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   rateButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -416,7 +429,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#DCFCE7",
   },
   stepCircleActive: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
   },
   stepIcon: {
     fontSize: 16,
@@ -436,7 +449,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   stepLabelActive: {
-    color: "#FF6B35",
+    color: "#0077CC",
     fontWeight: "700",
   },
   stepLabelCompleted: {

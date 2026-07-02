@@ -23,6 +23,12 @@ const plugins: ExpoConfig['plugins'] = [
       photosPermission: 'Allow $(PRODUCT_NAME) to access your photos to upload images.',
     },
   ],
+  [
+    'expo-location',
+    {
+      locationWhenInUsePermission: 'Allow $(PRODUCT_NAME) to use your location for delivery tracking.',
+    },
+  ],
 ];
 
 if (kakaoNativeAppKey) {
@@ -30,18 +36,18 @@ if (kakaoNativeAppKey) {
 }
 
 const config: ExpoConfig = {
-  name: 'mobile',
-  slug: 'mobile',
+  name: '오더이츠',
+  slug: 'order-eats',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './src/assets/images/icon.png',
-  scheme: 'mobile',
+  scheme: 'ordereats',
   userInterfaceStyle: 'automatic',
   ios: {
     supportsTablet: true,
   },
   android: {
-    package: 'com.khusan.fooddelivery',
+    package: 'com.khusan.ordereats',
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
       foregroundImage: './src/assets/images/android-icon-foreground.png',

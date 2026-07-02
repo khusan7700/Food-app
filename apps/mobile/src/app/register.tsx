@@ -1,4 +1,4 @@
-import { UserRole } from "@food-delivery/types";
+import { UserRole } from "@order-eats/types";
 import { isAxiosError } from "axios";
 import { useState } from "react";
 import {
@@ -15,9 +15,9 @@ import { useAuthStore } from "@/stores/auth.store";
 import { router } from "expo-router";
 
 const ROLES = [
-  { label: "Customer", value: UserRole.CUSTOMER },
-  { label: "Restaurant Owner", value: UserRole.RESTAURANT_OWNER },
-  { label: "Driver", value: UserRole.DRIVER },
+  { label: "고객", value: UserRole.CUSTOMER },
+  { label: "음식점 사장님", value: UserRole.RESTAURANT_OWNER },
+  { label: "드라이버", value: UserRole.DRIVER },
 ];
 
 export default function RegisterScreen() {
@@ -30,17 +30,16 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     if (!name || !email || !password) {
-      return Alert.alert("Please fill in all fields");
+      return Alert.alert("모든 필드를 입력해 주세요");
     }
     setIsLoading(true);
     try {
       await register({ name, email, password, role });
-      router.replace("/");
     } catch (error) {
       const message = isAxiosError<{ message?: string }>(error)
-        ? error.response?.data?.message ?? "Something went wrong"
-        : "Something went wrong";
-      Alert.alert("Registration failed", message);
+        ? error.response?.data?.message ?? "문제가 발생했습니다"
+        : "문제가 발생했습니다";
+      Alert.alert("회원가입 실패", message);
     } finally {
       setIsLoading(false);
     }
@@ -48,17 +47,17 @@ export default function RegisterScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create account</Text>
+      <Text style={styles.title}>회원가입</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Full name"
+        placeholder="이름"
         value={name}
         onChangeText={setName}
       />
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="이메일"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -66,14 +65,14 @@ export default function RegisterScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder="비밀번호"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
       {/* Role selector */}
-      <Text style={styles.label}>I am a...</Text>
+      <Text style={styles.label}>저는...</Text>
       <View style={styles.roleContainer}>
         {ROLES.map((r) => (
           <Pressable
@@ -106,12 +105,12 @@ export default function RegisterScreen() {
         {isLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Register</Text>
+          <Text style={styles.buttonText}>회원가입</Text>
         )}
       </Pressable>
 
       <Pressable onPress={() => router.replace("/login")}>
-        <Text style={styles.link}>Already have an account? Login</Text>
+        <Text style={styles.link}>이미 계정이 있으신가요? 로그인</Text>
       </Pressable>
     </ScrollView>
   );
@@ -143,16 +142,16 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     alignItems: "center",
   },
-  roleButtonActive: { backgroundColor: "#FF6B35", borderColor: "#FF6B35" },
+  roleButtonActive: { backgroundColor: "#0077CC", borderColor: "#0077CC" },
   roleText: { fontSize: 13, color: "#666" },
   roleTextActive: { color: "#fff", fontWeight: "600" },
   button: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
     marginBottom: 16,
   },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  link: { textAlign: "center", color: "#FF6B35" },
+  link: { textAlign: "center", color: "#0077CC" },
 });

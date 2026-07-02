@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { api } from "@/lib/axios";
-import { Order } from "@food-delivery/types";
+import { Order } from "@order-eats/types";
 
 type DriverOrder = Order & {
   restaurant: { id: string; name: string };
@@ -18,9 +18,16 @@ type DriverOrder = Order & {
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING_DRIVER: "#06B6D4",
-  PICKED_UP: "#FF6B35",
+  PICKED_UP: "#0077CC",
   DELIVERED: "#22C55E",
   CANCELLED: "#EF4444",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING_DRIVER: "드라이버 배정 중",
+  PICKED_UP: "픽업 완료",
+  DELIVERED: "배달 완료",
+  CANCELLED: "취소됨",
 };
 
 function DeliveryCard({
@@ -31,18 +38,19 @@ function DeliveryCard({
   onPress?: () => void;
 }) {
   const statusColor = STATUS_COLORS[order.status] ?? "#999";
-  const date = new Date(order.createdAt).toLocaleDateString("en-US", {
+  const date = new Date(order.createdAt).toLocaleDateString("ko-KR", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-  const isActive = order.status === "PICKED_UP";
+  const isClickable =
+    order.status === "PICKED_UP" || order.status === "PENDING_DRIVER";
 
   return (
     <Pressable
-      style={[styles.card, isActive && styles.cardActive]}
+      style={[styles.card, isClickable && styles.cardActive]}
       onPress={onPress}
-      disabled={!isActive}
+      disabled={!isClickable}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.restaurant}>{order.restaurant.name}</Text>
@@ -50,7 +58,7 @@ function DeliveryCard({
           style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}
         >
           <Text style={[styles.statusText, { color: statusColor }]}>
-            {order.status}
+            {STATUS_LABELS[order.status] ?? order.status}
           </Text>
         </View>
       </View>
@@ -60,11 +68,14 @@ function DeliveryCard({
       <View style={styles.cardFooter}>
         <Text style={styles.date}>{date}</Text>
         <Text style={styles.total}>
-          ${(order.totalPrice / 100).toFixed(2)}
+          ₩{Math.round(order.totalPrice).toLocaleString("ko-KR")}
         </Text>
       </View>
-      {isActive && (
-        <Text style={styles.tapHint}>Tap to open active delivery →</Text>
+      {order.status === "PICKED_UP" && (
+        <Text style={styles.tapHint}>탭하여 배달 현황 보기 →</Text>
+      )}
+      {order.status === "PENDING_DRIVER" && (
+        <Text style={styles.tapHint}>탭하여 주문 수락하기 →</Text>
       )}
     </Pressable>
   );
@@ -85,7 +96,7 @@ export default function DriverHistoryScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -93,20 +104,20 @@ export default function DriverHistoryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.title}>My Deliveries</Text>
+      <Text style={styles.title}>배달 내역</Text>
 
       {orders.length > 0 && (
         <View style={styles.summaryRow}>
           {inProgressCount > 0 && (
             <View style={styles.summaryCard}>
               <Text style={styles.summaryValueLight}>{inProgressCount}</Text>
-              <Text style={styles.summaryLabelLight}>in progress</Text>
+              <Text style={styles.summaryLabelLight}>진행 중</Text>
             </View>
           )}
           {deliveredCount > 0 && (
             <View style={[styles.summaryCard, styles.summaryCardMuted]}>
               <Text style={styles.summaryValue}>{deliveredCount}</Text>
-              <Text style={styles.summaryLabel}>completed</Text>
+              <Text style={styles.summaryLabel}>완료</Text>
             </View>
           )}
         </View>
@@ -114,9 +125,9 @@ export default function DriverHistoryScreen() {
 
       {orders.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No deliveries yet</Text>
+          <Text style={styles.emptyText}>아직 배달 내역이 없습니다</Text>
           <Text style={styles.emptySubText}>
-            Assigned orders will appear here
+            배정된 주문이 여기에 표시됩니다
           </Text>
         </View>
       ) : (
@@ -130,7 +141,9 @@ export default function DriverHistoryScreen() {
               onPress={
                 item.status === "PICKED_UP"
                   ? () => router.push("/(driver)/active")
-                  : undefined
+                  : item.status === "PENDING_DRIVER"
+                    ? () => router.push("/(driver)")
+                    : undefined
               }
             />
           )}
@@ -166,7 +179,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
@@ -206,7 +219,7 @@ const styles = StyleSheet.create({
   },
   cardActive: {
     borderWidth: 2,
-    borderColor: "#FF6B35",
+    borderColor: "#0077CC",
   },
   cardHeader: {
     flexDirection: "row",
@@ -250,7 +263,7 @@ const styles = StyleSheet.create({
   },
   tapHint: {
     fontSize: 12,
-    color: "#FF6B35",
+    color: "#0077CC",
     fontWeight: "600",
     marginTop: 4,
   },

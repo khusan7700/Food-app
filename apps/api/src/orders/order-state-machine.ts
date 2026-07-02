@@ -1,4 +1,4 @@
-import { OrderStatus } from '@food-delivery/types';
+import { OrderStatus } from '@order-eats/types';
 
 // READY -> PENDING_DRIVER -> PICKED_UP: driver is never set to PICKED_UP directly.
 // CANCELLED -> REFUND_PENDING -> REFUNDED: automatic Kakao Pay refund chain.

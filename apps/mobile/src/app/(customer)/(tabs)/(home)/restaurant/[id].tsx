@@ -13,10 +13,10 @@ import { useQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
 import { useCartStore } from "@/stores/cart.store";
-import { MenuCategory, MenuItem, Restaurant } from "@food-delivery/types";
+import { MenuCategory, MenuItem, Restaurant } from "@order-eats/types";
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 export default function RestaurantDetailScreen() {
@@ -50,12 +50,12 @@ export default function RestaurantDetailScreen() {
     // different restaurant in cart — confirm before clearing
     if (restaurantId && restaurantId !== item.restaurantId) {
       Alert.alert(
-        "Start new cart?",
-        `Your cart has items from ${useCartStore.getState().restaurantName}. Clear cart and add from ${restaurant.name}?`,
+        "새 장바구니를 시작할까요?",
+        `장바구니에 ${useCartStore.getState().restaurantName}의 메뉴가 있습니다. 비우고 ${restaurant.name}에서 담을까요?`,
         [
-          { text: "Cancel", style: "cancel" },
+          { text: "취소", style: "cancel" },
           {
-            text: "Clear & Add",
+            text: "비우고 담기",
             style: "destructive",
             onPress: () => {
               clearCart();
@@ -92,7 +92,7 @@ export default function RestaurantDetailScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -112,8 +112,33 @@ export default function RestaurantDetailScreen() {
           <View style={styles.heroPlaceholder} />
         )}
 
+        {!restaurant.isOpen && (
+          <View style={styles.closedBanner}>
+            <Text style={styles.closedBannerText}>
+              🔴 현재 영업 중이 아닙니다
+            </Text>
+          </View>
+        )}
+
         <View style={styles.infoSection}>
-          <Text style={styles.name}>{restaurant.name}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{restaurant.name}</Text>
+            <View
+              style={[
+                styles.openBadge,
+                !restaurant.isOpen && styles.openBadgeClosed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.openBadgeText,
+                  !restaurant.isOpen && styles.openBadgeTextClosed,
+                ]}
+              >
+                {restaurant.isOpen ? "영업중" : "영업종료"}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.cuisine}>{restaurant.cuisineType}</Text>
           {restaurant.description ? (
             <Text style={styles.description}>{restaurant.description}</Text>
@@ -125,7 +150,7 @@ export default function RestaurantDetailScreen() {
         </View>
 
         <View style={styles.menuSection}>
-          <Text style={styles.menuHeading}>Menu</Text>
+          <Text style={styles.menuHeading}>메뉴</Text>
 
           {categories.map((category) => {
             const categoryItems = menuItems.filter(
@@ -153,7 +178,7 @@ export default function RestaurantDetailScreen() {
                           </Text>
                         ) : null}
                         <Text style={styles.itemPrice}>
-                          ${formatPrice(item.price)}
+                          ₩{formatPrice(item.price)}
                         </Text>
                       </View>
 
@@ -171,6 +196,7 @@ export default function RestaurantDetailScreen() {
                             onPress={() =>
                               useCartStore.getState().decrementItem(item.id)
                             }
+                            disabled={!restaurant.isOpen}
                           >
                             <Text style={styles.qtyButtonText}>−</Text>
                           </Pressable>
@@ -178,16 +204,21 @@ export default function RestaurantDetailScreen() {
                           <Pressable
                             style={styles.qtyButton}
                             onPress={() => handleAddItem(item)}
+                            disabled={!restaurant.isOpen}
                           >
                             <Text style={styles.qtyButtonText}>+</Text>
                           </Pressable>
                         </View>
                       ) : (
                         <Pressable
-                          style={styles.addButton}
+                          style={[
+                            styles.addButton,
+                            !restaurant.isOpen && styles.addButtonDisabled,
+                          ]}
                           onPress={() => handleAddItem(item)}
+                          disabled={!restaurant.isOpen}
                         >
-                          <Text style={styles.addButtonText}>Add</Text>
+                          <Text style={styles.addButtonText}>담기</Text>
                         </Pressable>
                       )}
                     </View>
@@ -212,6 +243,43 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  closedBanner: {
+    backgroundColor: "#FEE2E2",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+  closedBannerText: {
+    color: "#DC2626",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  openBadge: {
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  openBadgeClosed: {
+    backgroundColor: "#FEE2E2",
+  },
+  openBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#16A34A",
+  },
+  openBadgeTextClosed: {
+    color: "#DC2626",
+  },
+  addButtonDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
   heroImage: {
     width: "100%",
     height: 220,
@@ -229,7 +297,8 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: "700",
-    marginBottom: 4,
+    flex: 1,
+    marginRight: 8,
   },
   cuisine: {
     fontSize: 14,
@@ -271,7 +340,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   itemRow: {
     flexDirection: "row",
@@ -298,7 +367,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#FF6B35",
+    color: "#0077CC",
   },
   itemImage: {
     width: 72,
@@ -306,7 +375,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   addButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -325,7 +394,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#FF6B35",
+    backgroundColor: "#0077CC",
     alignItems: "center",
     justifyContent: "center",
   },

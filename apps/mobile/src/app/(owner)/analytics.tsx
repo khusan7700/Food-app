@@ -9,7 +9,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "@/lib/axios";
-import { Order, Restaurant } from "@food-delivery/types";
+import { Order, Restaurant } from "@order-eats/types";
 
 type RestaurantOrder = Order & { items: { id: string }[] };
 
@@ -17,13 +17,26 @@ const STATUS_COLORS: Record<string, string> = {
   CONFIRMED: "#3B82F6",
   PREPARING: "#8B5CF6",
   READY: "#06B6D4",
-  PICKED_UP: "#FF6B35",
+  PICKED_UP: "#0077CC",
   DELIVERED: "#22C55E",
   CANCELLED: "#EF4444",
 };
 
-function formatPrice(cents: number) {
-  return (cents / 100).toFixed(2);
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "결제 대기",
+  CONFIRMED: "주문 확인됨",
+  PREPARING: "준비 중",
+  READY: "준비 완료",
+  PENDING_DRIVER: "드라이버 배정 중",
+  PICKED_UP: "픽업 완료",
+  DELIVERED: "배달 완료",
+  CANCELLED: "취소됨",
+  REFUND_PENDING: "환불 대기",
+  REFUNDED: "환불 완료",
+};
+
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
 }
 
 export default function OwnerAnalyticsScreen() {
@@ -56,6 +69,7 @@ export default function OwnerAnalyticsScreen() {
       .filter((o) => o.status !== "CANCELLED")
       .reduce((sum, o) => sum + o.totalPrice, 0),
   );
+  const totalRevenueDisplay = `₩${totalRevenue}`;
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -71,7 +85,7 @@ export default function OwnerAnalyticsScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF6B35" />
+          <ActivityIndicator size="large" color="#0077CC" />
         </View>
       </SafeAreaView>
     );
@@ -79,9 +93,9 @@ export default function OwnerAnalyticsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <Text style={styles.title}>Today&apos;s Summary</Text>
+      <Text style={styles.title}>오늘의 요약</Text>
       <Text style={styles.date}>
-        {new Date().toLocaleDateString("en-US", {
+        {new Date().toLocaleDateString("ko-KR", {
           weekday: "long",
           month: "long",
           day: "numeric",
@@ -92,12 +106,12 @@ export default function OwnerAnalyticsScreen() {
         <View style={styles.revenueRow}>
           <View style={styles.revenueItem}>
             <Text style={styles.revenueValue}>{todayOrders.length}</Text>
-            <Text style={styles.revenueLabel}>Orders</Text>
+            <Text style={styles.revenueLabel}>주문 수</Text>
           </View>
           <View style={styles.revenueDivider} />
           <View style={styles.revenueItem}>
-            <Text style={styles.revenueValue}>${totalRevenue}</Text>
-            <Text style={styles.revenueLabel}>Revenue</Text>
+            <Text style={styles.revenueValue}>{totalRevenueDisplay}</Text>
+            <Text style={styles.revenueLabel}>매출</Text>
           </View>
         </View>
       </View>
@@ -112,7 +126,7 @@ export default function OwnerAnalyticsScreen() {
                   { backgroundColor: STATUS_COLORS[status] ?? "#999" },
                 ]}
               />
-              <Text style={styles.statusLabel}>{status}</Text>
+              <Text style={styles.statusLabel}>{STATUS_LABELS[status] ?? status}</Text>
               <Text style={styles.statusCount}>{count}</Text>
             </View>
           ))}
@@ -121,7 +135,7 @@ export default function OwnerAnalyticsScreen() {
 
       {todayOrders.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No orders today yet</Text>
+          <Text style={styles.emptyText}>오늘 주문이 없습니다</Text>
         </View>
       ) : (
         <FlatList
@@ -149,15 +163,15 @@ export default function OwnerAnalyticsScreen() {
                       { color: STATUS_COLORS[item.status] ?? "#999" },
                     ]}
                   >
-                    {item.status}
+                    {STATUS_LABELS[item.status] ?? item.status}
                   </Text>
                 </View>
               </View>
               <Text style={styles.orderItems}>
-                {item.items.length} item{item.items.length !== 1 ? "s" : ""}
+                {item.items.length}개
               </Text>
               <Text style={styles.orderTotal}>
-                ${formatPrice(item.totalPrice)}
+                ₩{formatPrice(item.totalPrice)}
               </Text>
             </View>
           )}

@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus } from '@food-delivery/types';
+import { OrderStatus } from '@order-eats/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrdersGateway } from '../gateway/orders.gateway';
 import { DriverAssignmentService } from './driver-assignment.service';
@@ -84,6 +84,7 @@ export class DriverService {
     });
 
     this.ordersGateway.emitOrderUpdated(updated.customerId, updated);
+    this.ordersGateway.emitOrderCreated(updated.restaurantId, updated);
     return updated;
   }
 
@@ -105,6 +106,21 @@ export class DriverService {
     });
 
     this.ordersGateway.emitOrderUpdated(updated.customerId, updated);
+    this.ordersGateway.emitOrderCreated(updated.restaurantId, updated);
+    return updated;
+  }
+
+  getWaitingOrders() {
+    return this.driverAssignmentService.getWaitPoolOrders();
+  }
+
+  async claimOrder(orderId: string, driverId: string) {
+    const updated = await this.driverAssignmentService.claimWaitPoolOrder(
+      orderId,
+      driverId,
+    );
+    this.ordersGateway.emitOrderUpdated(updated.customerId, updated);
+    this.ordersGateway.emitOrderCreated(updated.restaurantId, updated);
     return updated;
   }
 
