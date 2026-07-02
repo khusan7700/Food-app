@@ -408,31 +408,11 @@ pnpm test:cov    # coverage report
 
 Short walkthrough clips for each role, recorded from the running app:
 
-<table>
-<tr>
-<td align="center" valign="top">
-
-🧑‍🍳 **Customer**
-
-<video src="publik/고객님.MOV" controls width="260"></video>
-
-</td>
-<td align="center" valign="top">
-
-🏪 **Restaurant Owner**
-
-<video src="publik/식당%20사장님.MOV" controls width="260"></video>
-
-</td>
-<td align="center" valign="top">
-
-🚗 **Driver**
-
-<video src="publik/라이더님.MOV" controls width="260"></video>
-
-</td>
-</tr>
-</table>
+| Role                    | Video                                                             |
+| ------------------------ | ------------------------------------------------------------------ |
+| 🧑‍🍳 **Customer**         | [고객님.MOV](publik/고객님.MOV)                 |
+| 🏪 **Restaurant Owner** | [식당 사장님.MOV](publik/식당%20사장님.MOV) |
+| 🚗 **Driver**           | [라이더님.MOV](publik/라이더님.MOV)             |
 
 ---
 
