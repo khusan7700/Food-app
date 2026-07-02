@@ -1,5 +1,5 @@
 {
-  "extends": "@food-delivery/config/tsconfig.base.json",
+  "extends": "@order-eats/config/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src"

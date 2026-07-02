@@ -1,0 +1,31 @@
+
+DB uchun run 
+
+pnpm --filter api prisma migrate dev
+pnpm --filter api prisma studio
+
+cd apps/api && pnpm prisma studio --port 5555
+
+
+
+backend & frontend ikklasini run qilish
+pnpm dev
+
+
+
+
+
+
+customer@test.com
+owner@test.com
+driver@test.com
+
+password123
+
+
+----------------------------------------------------------------------
+android telefon uchun
+
+pkill -f "expo start"
+cd /Users/khusan/Desktop/food/apps/mobile
+npx expo start --lan

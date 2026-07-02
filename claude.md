@@ -1,56 +1,55 @@
-# 🤖 CLAUDE.md — Food Delivery Project v1.2
+# 🤖 CLAUDE.md — Food-app Project v1.2
 
 ## Project Overview
 
 Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery ilovasi. Portfolio uchun mo'ljallangan — real foydalanuvchilar, real integratsiyalar.
 
-**Asosiy oqim:** Customer ro'yxatdan o'tadi → restoran topadi → buyurtma beradi → Stripe orqali to'lov qiladi → driver masofa asosida tayinlanadi → yetkazadi → baho beradi.
+**Asosiy oqim:** Customer ro'yxatdan o'tadi → restoran topadi → buyurtma beradi → Kakao Pay orqali to'lov qiladi → driver masofa asosida tayinlanadi → yetkazadi → baho beradi.
 
 ---
 
 ## Tech Stack
 
-| Paket                                       | Versiya    | Maqsad                               |
-| ------------------------------------------- | ---------- | ------------------------------------ |
-| `@nestjs/common`                            | `11.1.27`  | NestJS yadro                         |
-| `@nestjs/core`                              | `11.1.27`  | NestJS yadro                         |
-| `@nestjs/platform-express`                  | `11.1.27`  | HTTP adapter                         |
-| `@nestjs/websockets`                        | `11.1.27`  | Socket.IO integratsiya               |
-| `@nestjs/platform-socket.io`                | `11.1.27`  | Socket.IO adapter                    |
-| `@nestjs/passport`                          | `11.0.5`   | Auth (Kakao OAuth)                   |
-| `@nestjs/jwt`                               | `11.0.2`   | JWT tokenlar                         |
-| `@nestjs/schedule`                          | `^4.1.0`   | Cron jobs (payment polling, timeout) |
-| `rxjs`                                      | `7.8.2`    | Reactive streams                     |
-| `reflect-metadata`                          | `0.2.2`    | Decorator support                    |
-| `passport`                                  | `0.7.0`    | Auth middleware                      |
-| `passport-jwt`                              | `4.0.1`    | JWT strategy                         |
-| `passport-oauth2`                           | `1.8.0`    | Kakao OAuth 2.0                      |
-| `@prisma/client`                            | `7.8.0`    | PostgreSQL ORM client                |
-| `@upstash/redis`                            | `1.38.0`   | Redis / GPS cache                    |
-| `stripe`                                    | `22.2.1`   | To'lovlar (faqat Stripe)             |
-| `socket.io`                                 | `4.8.3`    | Real-time (server)                   |
-| `socket.io-client`                          | `4.8.3`    | Real-time (client)                   |
-| `uploadthing`                               | `7.7.4`    | Fayl yuklash                         |
-| `zustand`                                   | `5.0.14`   | State management                     |
-| `react`                                     | `19.2.7`   | UI                                   |
-| `react-native`                              | `0.76.9`   | Mobile                               |
-| `expo`                                      | `56.0.12`  | Expo SDK                             |
-| `expo-router`                               | `56.2.11`  | File-based routing                   |
-| `expo-linking`                              | `56.0.14`  | Deep linking                         |
-| `expo-constants`                            | `56.0.18`  | App constants                        |
-| `expo-location`                             | `^18.0.0`  | GPS broadcast (driver)               |
-| `@expo/metro-runtime`                       | `56.0.15`  | Metro bundler                        |
-| `react-native-screens`                      | `4.25.2`   | Native screens                       |
-| `react-native-reanimated`                   | `4.4.1`    | Animatsiyalar                        |
-| `react-native-gesture-handler`              | `3.0.1`    | Gesture                              |
-| `react-native-safe-area-context`            | `5.8.0`    | Safe area                            |
-| `react-native-webview`                      | `^13.13.0` | Kakao Maps WebView bridge            |
-| `nativewind`                                | `4.2.5`    | Tailwind for RN                      |
-| `@gluestack-ui/themed`                      | `^1.1.0`   | UI komponentlar                      |
-| `@gluestack-style/react`                    | `^1.0.0`   | gluestack-ui style engine            |
-| `@react-native-kakao/core`                  | `2.4.5`    | Kakao OAuth + Maps                   |
-| `@stripe/stripe-react-native`               | `^0.45.0`  | Stripe Payment Sheet                 |
-| `@react-native-async-storage/async-storage` | `^2.1.0`   | Zustand persist storage              |
+| Paket                                       | Versiya    | Maqsad                                 |
+| ------------------------------------------- | ---------- | -------------------------------------- |
+| `@nestjs/common`                            | `11.1.27`  | NestJS yadro                           |
+| `@nestjs/core`                              | `11.1.27`  | NestJS yadro                           |
+| `@nestjs/platform-express`                  | `11.1.27`  | HTTP adapter                           |
+| `@nestjs/websockets`                        | `11.1.27`  | Socket.IO integratsiya                 |
+| `@nestjs/platform-socket.io`                | `11.1.27`  | Socket.IO adapter                      |
+| `@nestjs/passport`                          | `11.0.5`   | Auth (Kakao OAuth)                     |
+| `@nestjs/jwt`                               | `11.0.2`   | JWT tokenlar                           |
+| `@nestjs/schedule`                          | `^4.1.2`   | Cron jobs (to'lov muddati, refund)     |
+| `rxjs`                                      | `7.8.2`    | Reactive streams                       |
+| `reflect-metadata`                          | `0.2.2`    | Decorator support                      |
+| `passport`                                  | `0.7.0`    | Auth middleware                        |
+| `passport-jwt`                              | `4.0.1`    | JWT strategy                           |
+| `passport-oauth2`                           | `1.8.0`    | Kakao OAuth 2.0                        |
+| `@prisma/client`                            | `7.8.0`    | PostgreSQL ORM client                  |
+| `@upstash/redis`                            | `1.38.0`   | Redis / GPS cache                      |
+| `socket.io`                                 | `4.8.3`    | Real-time (server)                     |
+| `socket.io-client`                          | `4.8.3`    | Real-time (client)                     |
+| `multer`                                    | `2.0.2`    | Fayl yuklash (local disk storage)      |
+| `zustand`                                   | `5.0.14`   | State management                       |
+| `react`                                     | `19.2.7`   | UI                                     |
+| `react-native`                              | `0.76.9`   | Mobile                                 |
+| `expo`                                      | `56.0.12`  | Expo SDK                               |
+| `expo-router`                               | `56.2.11`  | File-based routing                     |
+| `expo-linking`                              | `56.0.14`  | Deep linking                           |
+| `expo-constants`                            | `56.0.18`  | App constants                          |
+| `expo-location`                             | `^18.0.0`  | GPS broadcast (driver)                 |
+| `expo-image-picker`                         | `~56.0.18` | Rasm tanlash (Multer'ga yuklash)       |
+| `@expo/metro-runtime`                       | `56.0.15`  | Metro bundler                          |
+| `react-native-screens`                      | `4.25.2`   | Native screens                         |
+| `react-native-reanimated`                   | `4.4.1`    | Animatsiyalar                          |
+| `react-native-gesture-handler`              | `3.0.1`    | Gesture                                |
+| `react-native-safe-area-context`            | `5.8.0`    | Safe area                              |
+| `react-native-webview`                      | `13.16.1`  | Kakao Maps va Kakao Pay WebView bridge |
+| `nativewind`                                | `4.2.5`    | Tailwind for RN                        |
+| `@gluestack-ui/themed`                      | `^1.1.0`   | UI komponentlar                        |
+| `@gluestack-style/react`                    | `^1.0.0`   | gluestack-ui style engine              |
+| `@react-native-kakao/core`                  | `2.4.5`    | Kakao OAuth + Maps                     |
+| `@react-native-async-storage/async-storage` | `^2.1.0`   | Zustand persist storage                |
 
 > ⚠️ **`@rn-primitives/*` va `react-server-dom-webpack` ishlatilmaydi.** Birinchisi `gluestack-ui v2` ga almashtirilgan, ikkinchisi React Server Components uchun va bu loyihaga aloqasi yo'q — qo'shilmasin.
 
@@ -80,9 +79,15 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 
 ---
 
+## quidagi filelarni ko'rish taqiqlanadi
+
+.env
+.env.local
+sen hech qanday labrary install qilmaysan
+
 ## Rollar
 
-- **Customer** — restoran ko'rish, buyurtma berish, Stripe to'lov, live tracking, baho berish
+- **Customer** — restoran ko'rish, buyurtma berish, Kakao Pay to'lov, live tracking, baho berish
 - **Restaurant Owner** — menyu boshqarish, buyurtmalarni qabul qilish, analytics
 - **Driver** — online/offline toggle, GPS broadcasting, yetkazib berish
 
@@ -95,7 +100,6 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 - ko'd yozishdan oldin qaysi fileda qanday kod yoziladi oldindan ko'rsat agar "ok" desam kod yozishni boshla.
 - kod yozilgandan kegin review qilib qayta tekshirish kodda xatolik yoki konflikt bo’lsa o’rnida hal qilish kerak.
 - agar kod noto'gri bo'sa menga yoqmasa "yoq" yoki "no" desam kodni bekor qil.
-- kod yoizlgandan so'ng HISTORY.md filega promptlarni raqam bilan belgilab ket. va yozilgan kodlarni qisqacha qilib tarixlab ber. faqat va raqat. prompt va o'zgartirilgan yoki yaratilgan file ni list kor'rinishida tarixlab qo'y.
 
 ### Kod Uslubi
 
@@ -132,7 +136,7 @@ Bu loyiha NestJS + React Native (Expo) asosida qurilgan full-stack food delivery
 - Tranzitsiyalar faqat `orders/order-state-machine.ts` dagi `TRANSITIONS` jadvali orqali tekshiriladi
 - **`READY → PENDING_DRIVER`** — driver bevosita `PICKED_UP` qilinmaydi, avval `PENDING_DRIVER` orqali o'tadi
 - `PENDING`, `CONFIRMED`, `PREPARING` holatlaridan `CANCELLED` ga o'tish mumkin
-- `CANCELLED → REFUND_PENDING → REFUNDED` — avtomatik Stripe refund zanjiri
+- `CANCELLED → REFUND_PENDING → REFUNDED` — avtomatik Kakao Pay refund zanjiri (`/online/v1/payment/cancel`)
 
 ### Driver Tayinlash
 
@@ -278,7 +282,7 @@ export const useCartStore = create<CartStore>()(
 - **Kakao OAuth** — `kakaoAccessToken` backend `/api/auth/kakao` ga yuboriladi, backend Kakao API (`/v2/user/me`) dan user info oladi, o'z JWT chiqaradi
 - Kakao `REST_API_KEY` faqat backendda, `JAVASCRIPT_KEY` faqat mobileda (WebView uchun)
 - Role guards (`JwtAuthGuard` + `RolesGuard`) barcha protected routelarda majburiy
-- Stripe webhook `STRIPE_WEBHOOK_SECRET` bilan verifikatsiya, `idempotencyKey` ikki marta to'lov oldini oladi
+- Kakao Pay `KAKAOPAY_ADMIN_KEY` faqat backendda, `Authorization: SECRET_KEY {key}` header orqali yuboriladi
 - Driver location: JWT dan `userId` → faqat o'z `driverId` uchun yuborish huquqi tekshiriladi
 - `.env` fayllar hech qachon commitga kirmasin
 
@@ -287,6 +291,15 @@ export const useCartStore = create<CartStore>()(
 - WebView + Kakao Maps JS SDK (`react-native-webview`) — native module emas, Expo Go da ham ishlaydi
 - `EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY` orqali kalit uzatiladi
 - Driver marker yangilanishi: `driver:location:changed` Socket event → `postMessage` → WebView marker update (map qayta render qilinmaydi)
+
+### Kakao Pay (To'lov)
+
+- Webhook tushunchasi yo'q — redirect-based oqim: `POST /online/v1/payment/ready` → mobil WebView Kakao'ning hosted to'lov sahifasini ochadi → foydalanuvchi to'laydi → Kakao bizning `approval_url`/`cancel_url`/`fail_url`ga qaytaradi (`pg_token` bilan) → backend `POST /online/v1/payment/approve` chaqirib yakunlaydi
+- `Payment` modeli `Order`ga 1:1 bog'langan (`tid`, `status: READY|APPROVED|FAILED|CANCELLED`, `amount`)
+- `OrderStatus` enumga yangi qiymat **qo'shilmaydi** — to'lov holati alohida `Payment.status` orqali kuzatiladi
+- `PENDING → CONFIRMED` o'tishi faqat `Payment.status === APPROVED` bo'lsa ruxsat etiladi (`orders.service.ts`)
+- Test/sandbox uchun Kakao'ning rasmiy `cid: TC0ONETIME` ishlatiladi (`KAKAOPAY_CID` orqali sozlanadi)
+- ⚠️ Demo uchun soddalashtirish: `total_amount` Kakao'ga `order.totalPrice`dan (USD sent) to'g'ridan-to'g'ri uzatiladi, valyuta konvertatsiyasi qilinmaydi (KRW emas, real pul emas) — production uchun bu joy almashtirilishi kerak
 
 ### GPS / Redis
 
@@ -297,7 +310,7 @@ export const useCartStore = create<CartStore>()(
 ### Error Handling
 
 - WebSocket reconnect: exponential backoff (1s→2s→4s→8s, max 30s, 10 urinish), reconnect dan keyin REST orqali state sync
-- Stripe webhook kelmasa: cron polling fallback (5, 15, 60 daqiqada Stripe API dan so'rash)
+- Kakao Pay webhook yo'q — `payments.scheduler.ts` har 5 daqiqada `READY` holatda 30 daqiqadan ortiq qolgan to'lovlarni tekshiradi
 - 30 daqiqada to'lov bo'lmasa: order avtomatik `CANCELLED`
 - Restoran 30 daqiqada `CONFIRMED` qilmasa: avtomatik `CANCELLED → REFUND_PENDING → REFUNDED`
 - Driver 60 sek WebSocket javob bermasa: `isOnline: false`
@@ -316,8 +329,8 @@ food-delivery/
 │   │       ├── menu/
 │   │       ├── orders/
 │   │       │   └── order-state-machine.ts
-│   │       ├── payments/
-│   │       │   └── payments.scheduler.ts   # cron: polling, expiry
+│   │       ├── payments/     # Kakao Pay (ready/approve/cancel/fail)
+│   │       │   └── payments.scheduler.ts   # cron: to'lov muddati, refund retry
 │   │       ├── driver/
 │   │       │   └── driver-assignment.service.ts  # haversine algoritm
 │   │       ├── location/
@@ -326,6 +339,7 @@ food-delivery/
 │   │       ├── common/
 │   │       │   ├── pagination.ts
 │   │       │   └── filters/http-exception.filter.ts
+│   │       ├── uploads/      # Multer — local disk storage
 │   │       └── prisma/
 │   └── mobile/                # Expo app (NativeWind + Zustand + gluestack-ui)
 │       ├── global.css
@@ -365,13 +379,16 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/food_delivery
 JWT_SECRET=
 JWT_ACCESS_EXPIRY=1h
 JWT_REFRESH_EXPIRY=30d
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+KAKAOPAY_CID=TC0ONETIME
+KAKAOPAY_ADMIN_KEY=
+KAKAOPAY_BASE_URL=https://open-api.kakaopay.com
+API_BASE_URL=http://localhost:3000
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
-UPLOADTHING_TOKEN=
 KAKAO_REST_API_KEY=
 PORT=3000
+UPLOAD_DIR=uploads
+UPLOAD_BASE_URL=http://localhost:3000/uploads
 ```
 
 ### Mobile (`apps/mobile/.env`)
@@ -379,7 +396,6 @@ PORT=3000
 ```
 EXPO_PUBLIC_API_URL=http://localhost:3000/api
 EXPO_PUBLIC_SERVER_URL=http://localhost:3000
-EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY=
 KAKAO_NATIVE_APP_KEY=
 ```
@@ -399,9 +415,6 @@ pnpm prisma migrate dev    # Migration yaratish va qo'llash
 pnpm prisma migrate deploy # Production migration
 pnpm prisma studio         # Prisma Studio (GUI)
 pnpm prisma generate       # Prisma Client regenerate
-
-# Stripe (local webhook)
-stripe listen --forward-to localhost:3000/api/payments/webhook
 
 # gluestack-ui (packages/ui ichida)
 npx gluestack-ui@latest init
@@ -426,7 +439,7 @@ npx gluestack-ui@latest init
 13. **Driver tayinlash** — `READY → PENDING_DRIVER` orqali, haversine algoritm bilan, bevosita `PICKED_UP` ga o'tilmaydi
 14. **Pagination** — barcha list endpointlar `cursor`based, `offset`/`page` ishlatilmaydi
 15. **Redis cache** — restoran/menyu uchun cache-aside, yangilanishda invalidate; GPS location TTL 5 daqiqa (300s), 30s emas
-16. **Error handling** — WebSocket reconnect, Stripe polling fallback, restoran timeout — TDD v1.2 dagi cron/reconnect naqshlariga amal qilinadi
+16. **Error handling** — WebSocket reconnect, Kakao Pay to'lov muddati fallback, restoran timeout — TDD v1.2 dagi cron/reconnect naqshlariga amal qilinadi
 17. **Test** — har bir service uchun `.spec.ts`
 18. **Commit** — `feat:`, `fix:`, `refactor:` prefikslari
 

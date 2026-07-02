@@ -40,6 +40,10 @@ pnpm-debug.log*
 # editors
 .vscode/*
 !.vscode/extensions.json
+.idea/
 
 # coverage
 coverage/
+
+# uploaded files (Multer local disk storage)
+apps/api/uploads/

@@ -1,0 +1,342 @@
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useMutation } from "@tanstack/react-query";
+import { router } from "expo-router";
+import { api } from "@/lib/axios";
+import { useCartStore } from "@/stores/cart.store";
+import { Order } from "@order-eats/types";
+
+function formatPrice(won: number) {
+  return Math.round(won).toLocaleString("ko-KR");
+}
+
+export default function CartScreen() {
+  const {
+    items,
+    restaurantId,
+    restaurantName,
+    incrementItem,
+    decrementItem,
+    clearCart,
+  } = useCartStore();
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [addressError, setAddressError] = useState(false);
+
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  const { mutate: placeOrder, isPending } = useMutation({
+    mutationFn: () =>
+      api
+        .post<Order>("/orders", {
+          restaurantId,
+          deliveryAddress,
+          items: items.map((i) => ({
+            menuItemId: i.id,
+            quantity: i.quantity,
+          })),
+        })
+        .then((res) => res.data),
+    onSuccess: (order) => {
+      clearCart();
+      router.push(`/(customer)/payment/${order.id}`);
+    },
+    onError: (e: { response?: { data?: { message?: string } } }) => {
+      Alert.alert(
+        "오류",
+        e.response?.data?.message ?? "주문할 수 없습니다",
+      );
+    },
+  });
+
+  function handlePlaceOrder() {
+    if (items.length === 0) return Alert.alert("장바구니가 비어 있습니다");
+    if (!deliveryAddress.trim()) {
+      setAddressError(true);
+      return;
+    }
+    setAddressError(false);
+    placeOrder();
+  }
+
+  if (items.length === 0) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>장바구니가 비어 있습니다</Text>
+          <Pressable
+            style={styles.browseButton}
+            onPress={() => router.push("/(customer)/(tabs)/(home)")}
+          >
+            <Text style={styles.browseButtonText}>음식점 둘러보기</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <Text style={styles.heading}>장바구니</Text>
+      <Text style={styles.restaurantName}>{restaurantName}</Text>
+
+      <FlatList
+        data={items}
+        extraData={items}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <View style={styles.cartItem}>
+            {item.imageUrl ? (
+              <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+            ) : null}
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              <Text style={styles.itemPrice}>
+                ₩{formatPrice(item.price * item.quantity)}
+              </Text>
+            </View>
+            <View style={styles.qtyControls}>
+              <Pressable
+                style={styles.qtyButton}
+                onPress={() => decrementItem(item.id)}
+              >
+                <Text style={styles.qtyButtonText}>−</Text>
+              </Pressable>
+              <Text style={styles.qtyCount}>{item.quantity}</Text>
+              <Pressable
+                style={styles.qtyButton}
+                onPress={() => incrementItem(item.id)}
+              >
+                <Text style={styles.qtyButtonText}>+</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+        ListFooterComponent={
+          <View style={styles.footer}>
+            <Text style={styles.sectionTitle}>배달 주소</Text>
+            <TextInput
+              style={[
+                styles.addressInput,
+                addressError && styles.addressInputError,
+              ]}
+              placeholder="배달 주소를 입력하세요"
+              placeholderTextColor={addressError ? "#EF4444" : "#aaa"}
+              value={deliveryAddress}
+              onChangeText={(v) => {
+                setDeliveryAddress(v);
+                if (v.trim()) setAddressError(false);
+              }}
+              multiline
+            />
+            {addressError && (
+              <Text style={styles.addressErrorText}>주소를 입력해 주세요</Text>
+            )}
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>합계 ({itemCount}개)</Text>
+              <Text style={styles.totalAmount}>₩{formatPrice(cartTotal)}</Text>
+            </View>
+
+            <Pressable
+              style={styles.kakaoPayButton}
+              onPress={() => {
+                handlePlaceOrder();
+              }}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <ActivityIndicator color="#191919" />
+              ) : (
+                <Text style={styles.kakaoPayButtonText}>
+                  카카오페이로 결제
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                Alert.alert("장바구니를 비울까요?", "모든 항목을 삭제합니다.", [
+                  { text: "취소", style: "cancel" },
+                  { text: "비우기", style: "destructive", onPress: clearCart },
+                ]);
+              }}
+            >
+              <Text style={styles.clearText}>장바구니 비우기</Text>
+            </Pressable>
+          </View>
+        }
+      />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 16,
+  },
+  browseButton: {
+    backgroundColor: "#0077CC",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  browseButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: "700",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  restaurantName: {
+    fontSize: 14,
+    color: "#666",
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
+  cartItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#eee",
+    gap: 12,
+  },
+  itemImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  itemPrice: {
+    fontSize: 14,
+    color: "#0077CC",
+    fontWeight: "700",
+  },
+  qtyControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  qtyButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#0077CC",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  qtyButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  qtyCount: {
+    fontSize: 16,
+    fontWeight: "700",
+    minWidth: 20,
+    textAlign: "center",
+  },
+  footer: {
+    paddingTop: 20,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  addressInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 15,
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  addressInputError: {
+    borderColor: "#EF4444",
+    borderWidth: 1.5,
+  },
+  addressErrorText: {
+    color: "#EF4444",
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    marginTop: 8,
+  },
+  totalLabel: {
+    fontSize: 16,
+    color: "#333",
+  },
+  totalAmount: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0077CC",
+  },
+  kakaoPayButton: {
+    backgroundColor: "#FEE500",
+    borderRadius: 8,
+    padding: 16,
+    alignItems: "center",
+  },
+  kakaoPayButtonText: {
+    color: "#191919",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  clearText: {
+    textAlign: "center",
+    color: "#EF4444",
+    fontSize: 14,
+    paddingBottom: 8,
+  },
+});

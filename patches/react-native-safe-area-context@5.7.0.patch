@@ -1,0 +1,30 @@
+diff --git a/lib/commonjs/NativeSafeAreaProvider.web.js b/lib/commonjs/NativeSafeAreaProvider.web.js
+index dcf04236841493a5a57e0fe759f02e10cf40049a..2f072b33c19fda5d5360c27e416471ac4806c230 100644
+--- a/lib/commonjs/NativeSafeAreaProvider.web.js
++++ b/lib/commonjs/NativeSafeAreaProvider.web.js
+@@ -66,7 +66,9 @@ function NativeSafeAreaProvider({
+     element.addEventListener(getSupportedTransitionEvent(), onEnd);
+     onEnd();
+     return () => {
+-      document.body.removeChild(element);
++      if (element.parentNode === document.body) {
++        document.body.removeChild(element);
++      }
+       element.removeEventListener(getSupportedTransitionEvent(), onEnd);
+     };
+   }, [onInsetsChange]);
+diff --git a/lib/module/NativeSafeAreaProvider.web.js b/lib/module/NativeSafeAreaProvider.web.js
+index 7f75c72e1e20b9887305ef68980a71a7b1aad095..81b0cdf69f1dbb9dce757c679281bbe50f901eb2 100644
+--- a/lib/module/NativeSafeAreaProvider.web.js
++++ b/lib/module/NativeSafeAreaProvider.web.js
+@@ -59,7 +59,9 @@ export function NativeSafeAreaProvider({
+     element.addEventListener(getSupportedTransitionEvent(), onEnd);
+     onEnd();
+     return () => {
+-      document.body.removeChild(element);
++      if (element.parentNode === document.body) {
++        document.body.removeChild(element);
++      }
+       element.removeEventListener(getSupportedTransitionEvent(), onEnd);
+     };
+   }, [onInsetsChange]);

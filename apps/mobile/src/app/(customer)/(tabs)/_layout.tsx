@@ -1,0 +1,93 @@
+import { SymbolView } from "expo-symbols";
+import { Tabs } from "expo-router";
+
+import Colors from "@/constants/Colors";
+import { useColorScheme } from "@/components/useColorScheme";
+import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import { useCartStore } from "@/stores/cart.store";
+
+const CART_HAS_ITEMS_COLOR = "#3B82F6"; // blue
+
+export default function CustomerTabsLayout() {
+  const colorScheme = useColorScheme();
+  const cartItemCount = useCartStore((s) => s.items.length);
+  const hasCartItems = cartItemCount > 0;
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme].tint,
+        headerShown: useClientOnlyValue(false, true),
+      }}
+    >
+      <Tabs.Screen
+        name="(home)"
+        options={{
+          title: "홈",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "house.fill", android: "home", web: "home" }}
+              tintColor={color}
+              size={28}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: "검색",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "magnifyingglass", android: "search", web: "search" }}
+              tintColor={color}
+              size={28}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "장바구니",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "bag.fill", android: "shopping_cart", web: "shopping_cart" }}
+              tintColor={hasCartItems ? CART_HAS_ITEMS_COLOR : color}
+              size={28}
+            />
+          ),
+          tabBarLabel: ({ color }) => null,
+          tabBarBadge: hasCartItems ? cartItemCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: CART_HAS_ITEMS_COLOR },
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: "주문",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "shippingbox.fill", android: "local_shipping", web: "inventory" }}
+              tintColor={color}
+              size={28}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "프로필",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "person.crop.circle.fill", android: "account_circle", web: "account_circle" }}
+              tintColor={color}
+              size={28}
+            />
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
