@@ -8,6 +8,8 @@ build/
 .turbo/
 *.tsbuildinfo
 
+apps/api/uploads
+
 # expo / react native
 .expo/
 .expo-shared/
