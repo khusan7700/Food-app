@@ -414,21 +414,21 @@ Short walkthrough clips for each role, recorded from the running app:
 
 🧑‍🍳 **Customer**
 
-<video src="https://raw.githubusercontent.com/khusan7700/Food-app/master/publik/%EA%B3%A0%EA%B0%9D%EB%8B%98.MOV" controls autoplay muted loop playsinline width="260"></video>
+<video src="publik/고객님.MOV" controls width="260"></video>
 
 </td>
 <td align="center" valign="top">
 
 🏪 **Restaurant Owner**
 
-<video src="https://raw.githubusercontent.com/khusan7700/Food-app/master/publik/%EC%8B%9D%EB%8B%B9%20%EC%82%AC%EC%9E%A5%EB%8B%98.MOV" controls autoplay muted loop playsinline width="260"></video>
+<video src="publik/식당%20사장님.MOV" controls width="260"></video>
 
 </td>
 <td align="center" valign="top">
 
 🚗 **Driver**
 
-<video src="https://raw.githubusercontent.com/khusan7700/Food-app/master/publik/%EB%9D%BC%EC%9D%B4%EB%8D%94%EB%8B%98.MOV" controls autoplay muted loop playsinline width="260"></video>
+<video src="publik/라이더님.MOV" controls width="260"></video>
 
 </td>
 </tr>
