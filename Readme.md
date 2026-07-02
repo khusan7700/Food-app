@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍔 Food Delivery Application
+# 🍔 ORDER-EATS Application
 
 ### A real-time, three-sided food delivery platform built with NestJS & Expo
 
@@ -404,9 +404,35 @@ pnpm test:cov    # coverage report
 
 ---
 
-## 📸 Screenshots
+## 📸 Demo Videos
 
-_Add app screenshots or a short demo GIF/video here once available — highly recommended for portfolio presentation._
+Short walkthrough clips for each role, recorded from the running app:
+
+<table>
+<tr>
+<td align="center" valign="top">
+
+🧑‍🍳 **Customer**
+
+<video src="publik/고객님.MOV" controls autoplay muted loop playsinline width="260"</video>
+
+</td>
+<td align="center" valign="top">
+
+🏪 **Restaurant Owner**
+
+<video src="publik/식당%20사장님.MOV" controls autoplay muted loop playsinline width="260"</video>
+
+</td>
+<td align="center" valign="top">
+
+🚗 **Driver**
+
+<video src="publik/라이더님.MOV" controls autoplay muted loop playsinline width="260"</video>
+
+</td>
+</tr>
+</table>
 
 ---
 
